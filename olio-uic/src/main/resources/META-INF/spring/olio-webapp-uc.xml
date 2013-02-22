@@ -20,8 +20,8 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
 	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
 	
-	<bean id="validService" class="org.apache.olio.webapp.service.uc.ValidServiceImpl" />
+	<bean id="personService" class="org.apache.olio.webapp.service.uic.PersonServiceImpl" />
 	
-	<dubbo:service interface="org.apache.olio.webapp.service.uc.ValidService" ref="validService" />
+	<dubbo:service interface="org.apache.olio.webapp.service.uic.PersonService" ref="personService" />
 	
 </beans>

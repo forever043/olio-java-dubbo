@@ -13,10 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.olio.webapp.service.uc;
+package org.apache.olio.webapp.service.uic;
 
-public interface ValidService {
+public interface RelationService {
 
 	String sayHello(String name);
+
+/*
+    void addFriend(String userName, String friendUserName);
+    List<String> getFriendsUserName(String userName);
+
+    int addInvitation(Person loggedInUser, Invitation invitation);
+    Invitation findInvitation(String requestorUsername, String candidateUsername);
+    void deleteInvitation(Invitation inv);
+*/
 
 }

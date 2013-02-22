@@ -15,6 +15,6 @@
     <dubbo:registry address="zookeeper://xen-dev:2181" />
      
     <!-- which service to consume? -->
-    <dubbo:reference id="validService" interface="org.apache.olio.webapp.service.uc.ValidService" />
+    <dubbo:reference id="personService" interface="org.apache.olio.webapp.service.uic.PersonService" />
 
 </beans>

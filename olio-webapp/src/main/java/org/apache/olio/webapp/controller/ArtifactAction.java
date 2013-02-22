@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-import org.apache.olio.webapp.service.uc.ValidService;
+import org.apache.olio.webapp.service.uic.PersonService;
 
 /**
  * This action class serves up images. The care is taken to serve images that are user-generated
@@ -98,12 +98,12 @@ public class ArtifactAction implements Action {
 
 	// ++++ by majiuyue - test dubbo service
         WebApplicationContext wactx = WebApplicationContextUtils.getWebApplicationContext(context);
-        ValidService validService = (ValidService)wactx.getBean("validService");;
-        if (validService == null)
-	  logger.severe("validService == null!!");
+        PersonService personService = (PersonService)wactx.getBean("personService");;
+        if (personService == null)
+	  logger.severe("personService == null!!");
         else {
-	  String val = validService.sayHello(imagePath);
-	  logger.severe("validService return \"" + val +"\"");
+	  String val = personService.sayHello(imagePath);
+	  logger.severe("personService return \"" + val +"\"");
         }
 	// ---- end
 

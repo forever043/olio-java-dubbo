@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.olio.webapp.service.uc;
+package org.apache.olio.webapp.service.eic;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+public interface EventService {
 
-import org.apache.olio.webapp.service.uc.ValidService;
-import com.alibaba.dubbo.rpc.RpcContext;
+	String sayHello(String name);
 
-public class ValidServiceImpl implements ValidService {
-
-    public String sayHello(String name) {
-        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
-        return "Hello " + name + ", response form provider: " + RpcContext.getContext().getLocalAddress();
-    }
-    
 }

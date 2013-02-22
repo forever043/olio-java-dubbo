@@ -13,10 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.olio.webapp.service.ec;
+package org.apache.olio.webapp.service.uic;
 
-public interface EventService {
+import java.util.List;
+import org.apache.olio.webapp.model.Person;
 
-	String sayHello(String name);
+public interface PersonService {
+
+    String sayHello(String name);
+
+    Person validLogin(String username, String password);
+    Person getPerson(String username);
+    void addPerson(Person person);
+    void updatePerson(Person person);
+    void deletePerson(String person);
+    List<Person> searchPerson(String query, int maxResult);
 
 }
