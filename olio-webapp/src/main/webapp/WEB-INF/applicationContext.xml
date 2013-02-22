@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+                                             
+    <!-- consumer application name -->
+    <dubbo:application name="olio-webapp"  />
+     
+    <!-- registry address, used for consumer to discover services -->
+    <dubbo:registry address="zookeeper://xen-dev:2181" />
+     
+    <!-- which service to consume? -->
+    <dubbo:reference id="validService" interface="org.apache.olio.webapp.service.uc.ValidService" />
+
+</beans>
