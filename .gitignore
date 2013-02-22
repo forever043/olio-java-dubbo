@@ -4,3 +4,12 @@
 *.jar
 *.war
 *.ear
+
+# target path #
+*/target
+
+# Unknown surefire file #
+surefire-classloader.properties
+surefire.properties
+surefire-system.properties
+
