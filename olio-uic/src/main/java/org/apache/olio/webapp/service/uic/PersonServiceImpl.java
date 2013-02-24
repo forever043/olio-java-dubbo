@@ -18,24 +18,58 @@ package org.apache.olio.webapp.service.uic;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Resource;
 
-import org.apache.olio.webapp.service.uic.PersonService;
-import org.apache.olio.webapp.model.Person;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
+import javax.persistence.Query;
+//import javax.transaction.UserTransaction;
+
 import com.alibaba.dubbo.rpc.RpcContext;
+import org.apache.olio.webapp.model.Person;
+import org.apache.olio.webapp.service.uic.PersonService;
+
 
 public class PersonServiceImpl implements PersonService {
 
+    @PersistenceUnit(unitName = "BPWebappPu")
+    private EntityManagerFactory emf;
+    //@Resource
+    //private UserTransaction utx;
+
+    private Logger logger = Logger.getLogger(PersonServiceImpl.class.getName());
+
     public String sayHello(String name) {
-        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
+        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" 
+                           + "Hello " + name + ", "
+                           + "request from consumer: " + RpcContext.getContext().getRemoteAddress());
         return "Hello " + name + ", response form provider: " + RpcContext.getContext().getLocalAddress();
     }
 
-    public Person validLogin(String username, String password) {
+    public Person validLogin(String userName, String password) {
         return null;
     }
 
-    public Person getPerson(String username) {
-        return null;
+    public Person getPerson(String userName) {
+        EntityManager em = emf.createEntityManager();
+        logger.finest("In findPerson for " + userName);
+        try {
+            //Query q = em.createNamedQuery("getUserByName");
+            Query q = em.createQuery("SELECT u FROM Person u WHERE u.userName = :userName");
+            q.setParameter("userName", userName);
+            List<Person> users = q.getResultList();
+            if (users.size() < 1) {
+                logger.warning("Person with username = " + userName + " not found");
+                return null;
+            } else {
+                return users.get(0);
+            }
+        } finally {
+            em.close();
+        }
     }
 
     public void addPerson(Person person) {
@@ -50,5 +84,4 @@ public class PersonServiceImpl implements PersonService {
     public List<Person> searchPerson(String query, int maxResult) {
         return null;
     }
-    
 }

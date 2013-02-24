@@ -444,6 +444,7 @@
             </plugin>
         </plugins>
     </build>
+    
     <repositories>
         <repository>
             <id>opensesame.releases</id>
@@ -455,6 +456,20 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+	    <id>jboss-public-repository-group</id>
+	    <name>JBoss Public Repository Group</name>
+	    <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+	    <layout>default</layout>
+	    <releases>
+	        <enabled>true</enabled>
+	        <updatePolicy>never</updatePolicy>
+	    </releases>
+	    <snapshots>
+	        <enabled>true</enabled>
+	        <updatePolicy>never</updatePolicy>
+	    </snapshots>
+	</repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
