@@ -70,7 +70,13 @@ public class PersonServiceImpl implements PersonService {
                 logger.warning("Person with username = " + userName + " not found");
                 return null;
             } else {
-                return users.get(0);
+                logger.severe("Person with username = " + userName + " FOUND OK!!");
+                Person person = users.get(0);
+                person.getAddress();
+                person.getIncomingInvitations();
+                person.getFriends();
+                //person.getSocialEvents();
+                return person;
             }
         } finally {
             em.close();
