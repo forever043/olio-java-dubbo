@@ -55,7 +55,15 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public Person validLogin(String userName, String password) {
-        return null;
+	Person person = getPerson(userName);
+        if (person.getPassword().equals(password)) {
+            logger.severe("user \"" + userName + "\" login OK");
+            return person;
+        }
+        else {
+            logger.severe("user \"" + userName + "\" login Failed, should be \"" + person.getPassword() + "\"");
+            return null;
+        }
     }
 
     //@TransactionAttribute(TransactionAttributeType.REQUIRED)

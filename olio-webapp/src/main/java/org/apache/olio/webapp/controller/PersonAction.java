@@ -38,6 +38,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+import org.apache.olio.webapp.service.uic.PersonService;
+
 /**
  * handles all request related to users
  * @author Mark Basler
@@ -86,6 +90,20 @@ public class PersonAction implements Action {
                     userBean.setDisplayMessage("Successfully logged in");
                     userBean.setLoggedInPerson(p);
                 }
+	// majiuyue - dubbo test
+        WebApplicationContext wactx = WebApplicationContextUtils.getWebApplicationContext(context);
+        PersonService personService = (PersonService)wactx.getBean("personService");;
+        if (personService == null)
+	  logger.severe("personService == null!!");
+        else {
+	  Person per = personService.validLogin(user_name, password);
+          if (per != null)
+	    logger.severe("Person " +per.getFirstName()+per.getLastName()+" login OK");
+          else 
+	    logger.severe("Person " +user_name+" login Failed");
+        }
+	// majiuyue - end
+		
             } else {
                 userBean.setDisplayMessage("Log in failed for user_name = " + user_name +
                         " password = " + password);
