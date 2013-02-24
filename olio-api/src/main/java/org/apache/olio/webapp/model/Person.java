@@ -76,7 +76,7 @@ public class Person implements java.io.Serializable {
     private String imageThumbURL;
     private String timezone;
     private Collection<Person> friends=new ArrayList<Person>();
-    private Collection<SocialEvent> socialEvents=new ArrayList<SocialEvent>();
+    //private Collection<SocialEvent> socialEvents=new ArrayList<SocialEvent>();
     private Collection<Invitation> incomingInvitations=new ArrayList<Invitation>();
     private Collection<Invitation> outgoingInvitations = new ArrayList<Invitation>();
     private Address address;
@@ -157,7 +157,7 @@ public class Person implements java.io.Serializable {
 
     
     
-    /* The default fetch type for OneToOne is EAGER. However, for person, the
+    /* The default fetch type for OneToOne is LAZY. However, for person, the
      * address is not required for listing attendees in a social event.
      * So we will set it to LAZY and only load it when required (in ModelFacade).
      * */
@@ -177,10 +177,12 @@ public class Person implements java.io.Serializable {
         return friends;
     }
     
+/*
     @ManyToMany(mappedBy = "attendees")
     public Collection<SocialEvent> getSocialEvents() {
         return socialEvents;
     }
+*/
 
     @OneToMany(mappedBy = "candidate", cascade={CascadeType.PERSIST}, fetch=FetchType.LAZY)
     //@OneToMany(mappedBy = "candidate")
@@ -225,9 +227,11 @@ public class Person implements java.io.Serializable {
         this.outgoingInvitations = outgoingInvitations;
     }
     
+/*
     public void setSocialEvents(Collection<SocialEvent> socialEvents) {
         this.socialEvents=socialEvents;
     }
+*/
     public void setFriends(Collection<Person> friends) {
         this.friends=friends;
     }

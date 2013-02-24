@@ -90,6 +90,7 @@ public class SocialEvent implements java.io.Serializable {
         this.createdTimestamp=new Timestamp(new Date().getTime());
     }
 
+
    /* EclipseLink 1.0 sometimes generated the same ID 
     * under heavy load leading to transaction failures during the insertion of
     * SocialEvents (PK violation). The problem seems to happen when the allocation size is exceeded.
@@ -160,13 +161,19 @@ public class SocialEvent implements java.io.Serializable {
         return telephone;
     }
     
+/* majiuyue - should be deleted
     public String getTimezone() {
         return literatureURL;
     }
+*/
 
+/*
     @ManyToMany
-    @JoinTable(name = "PERSON_SOCIALEVENT", joinColumns = @JoinColumn(name = "SOCIALEVENTID", referencedColumnName = "SOCIALEVENTID")
-    , inverseJoinColumns = @JoinColumn(name = "USERNAME", referencedColumnName = "USERNAME"))
+    @JoinTable(name = "PERSON_SOCIALEVENT",
+               joinColumns = @JoinColumn(name = "SOCIALEVENTID",
+                                         referencedColumnName = "SOCIALEVENTID"),
+        inverseJoinColumns = @JoinColumn(name = "USERNAME",
+                                         referencedColumnName = "USERNAME"))
     public Collection<Person> getAttendees() {
         return attendees;
     }
@@ -174,6 +181,7 @@ public class SocialEvent implements java.io.Serializable {
     public void setAttendees(Collection<Person> attendees) {
         this.attendees=attendees;
     }
+*/
     
     public void setSocialEventID(int socialEventID) {
         this.socialEventID = socialEventID;

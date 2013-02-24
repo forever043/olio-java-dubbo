@@ -27,6 +27,11 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 import javax.persistence.Query;
 //import javax.transaction.UserTransaction;
+/*
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import static javax.ejb.TransactionAttributeType.REQUIRED;
+*/
 
 import com.alibaba.dubbo.rpc.RpcContext;
 import org.apache.olio.webapp.model.Person;
@@ -53,12 +58,12 @@ public class PersonServiceImpl implements PersonService {
         return null;
     }
 
+    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
     public Person getPerson(String userName) {
         EntityManager em = emf.createEntityManager();
         logger.finest("In findPerson for " + userName);
         try {
-            //Query q = em.createNamedQuery("getUserByName");
-            Query q = em.createQuery("SELECT u FROM Person u WHERE u.userName = :userName");
+            Query q = em.createNamedQuery("getUserByName");
             q.setParameter("userName", userName);
             List<Person> users = q.getResultList();
             if (users.size() < 1) {
