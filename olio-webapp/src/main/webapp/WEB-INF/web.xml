@@ -17,7 +17,10 @@
  * limitations under the License.
  *
 -->
-<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+<web-app version="2.5"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
     <display-name>Olio WebApp TestSuite</display-name>
 
@@ -43,8 +46,12 @@
     </listener>
 
     <servlet>
-        <servlet-name>ControllerServlet</servlet-name>
-        <servlet-class>org.apache.olio.webapp.controller.ControllerServlet</servlet-class>
+        <servlet-name>ProxyServlet</servlet-name>
+        <servlet-class>org.apache.olio.webapp.controller.HttpServletProxy</servlet-class>
+        <init-param>
+            <param-name>targetServlet</param-name>
+            <param-value>ControllerServlet</param-value>
+        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
@@ -96,43 +103,43 @@
 
     <!-- end jersey changes -->
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/rss</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/getRssFeed</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/person/*</url-pattern>
     </servlet-mapping>    
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/event/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/EventRSS</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/logout</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/tag/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/util/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ControllerServlet</servlet-name>
+        <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/access-artifacts/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>

@@ -52,14 +52,9 @@ public class PersonAction implements Action {
 
     private Logger logger = Logger.getLogger(PersonAction.class.getName());
     private ServletContext context;
-    private PersonService personService;
 
     public PersonAction(ServletContext context) {
         this.context = context;
-        WebApplicationContext webctx = 
-        personService = (PersonService)WebApplicationContextUtils.getWebApplicationContext(context).getBean("personService");;
-        if (personService == null)
-	  logger.severe("personService == null!!");
     }
 
     /**

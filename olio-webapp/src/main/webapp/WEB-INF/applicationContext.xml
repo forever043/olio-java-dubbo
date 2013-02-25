@@ -17,4 +17,10 @@
     <!-- which service to consume? -->
     <dubbo:reference id="personService" interface="org.apache.olio.webapp.service.uic.PersonService" />
 
+    <bean id="ControllerServlet" class="org.apache.olio.webapp.controller.ControllerServlet">
+       <property name="personService">
+           <ref bean="personService"/>
+       </property>
+    </bean>
+
 </beans>

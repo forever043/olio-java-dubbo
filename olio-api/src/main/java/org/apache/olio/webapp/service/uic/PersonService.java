@@ -27,4 +27,6 @@ public interface PersonService {
     void deletePerson(String person);
     List<Person> searchPerson(String query, int maxResult);
 
+    String sayHello(String msg);
+
 }

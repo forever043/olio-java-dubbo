@@ -30,6 +30,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.olio.webapp.service.uic.PersonService;
+
 //import com.sun.javaee.blueprints.webapp.model.Item;
 //import com.sun.javaee.blueprints.webapp.model.Tag;
 
@@ -45,6 +47,7 @@ public class ControllerServlet extends HttpServlet {
     
     private static final Logger logger = Logger.getLogger(ControllerServlet.class.getName());
     private ActionMap actionMap = new ActionMap();
+    private PersonService personService;
     
     @Override
     public void destroy() {
@@ -80,6 +83,13 @@ public class ControllerServlet extends HttpServlet {
         actionMap.put("/event", new EventAction(context));
         actionMap.put("/tag", new TagAction(context));
         actionMap.put("/util", new UtilAction(context));
+
+        String ret = personService.sayHello("ControllerServlet");
+        logger.severe(ret);
+    }
+
+    public void setPersonService(PersonService personService) {
+        this.personService = personService;
     }
     
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
