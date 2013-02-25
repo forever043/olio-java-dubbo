@@ -20,32 +20,25 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Resource;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceUnit;
-import javax.persistence.Query;
-//import javax.transaction.UserTransaction;
-/*
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import static javax.ejb.TransactionAttributeType.REQUIRED;
-*/
+import javax.sql.DataSource;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.dubbo.rpc.RpcContext;
 import org.apache.olio.webapp.model.Person;
-import org.apache.olio.webapp.service.uic.PersonService;
+import org.apache.olio.webapp.model.PersonRowMapper;
+//import org.apache.olio.webapp.service.uic.PersonService;
 
 
 public class PersonServiceImpl implements PersonService {
 
-    @PersistenceUnit(unitName = "BPWebappPu")
-    private EntityManagerFactory emf;
-    //@Resource
-    //private UserTransaction utx;
-
     private Logger logger = Logger.getLogger(PersonServiceImpl.class.getName());
+    private JdbcTemplate jdbcTemplate;
+
+    public void setDataSource(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
 
     public String sayHello(String name) {
         System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" 
@@ -66,29 +59,12 @@ public class PersonServiceImpl implements PersonService {
         }
     }
 
-    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
     public Person getPerson(String userName) {
-        EntityManager em = emf.createEntityManager();
-        logger.finest("In findPerson for " + userName);
-        try {
-            Query q = em.createNamedQuery("getUserByName");
-            q.setParameter("userName", userName);
-            List<Person> users = q.getResultList();
-            if (users.size() < 1) {
-                logger.warning("Person with username = " + userName + " not found");
-                return null;
-            } else {
-                logger.severe("Person with username = " + userName + " FOUND OK!!");
-                Person person = users.get(0);
-                person.getAddress();
-                person.getIncomingInvitations();
-                person.getFriends();
-                //person.getSocialEvents();
-                return person;
-            }
-        } finally {
-            em.close();
-        }
+        Person person = (Person)jdbcTemplate.queryForObject(
+            "SELECT * FROM PERSON u WHERE u.userName = ?",
+            new Object[]{userName},
+            new PersonRowMapper());  
+        return person;
     }
 
     public void addPerson(Person person) {

@@ -18,7 +18,6 @@
 
 package org.apache.olio.webapp.model;
 
-//import org.apache.olio.webapp.util.WebappUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.persistence.Entity;

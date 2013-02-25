@@ -18,21 +18,7 @@
 
 package org.apache.olio.webapp.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.TableGenerator;
-
-/**
- * 
- * @author Mark Basler
- * @author Binu John
- */
-@Entity
-@Table (name="ADDRESS")
-public class Address implements java.io.Serializable {
+public class Address {
     
     private int addressID;
     private String street1;
@@ -59,16 +45,6 @@ public class Address implements java.io.Serializable {
         this.longitude = longitude;
     }
     
-    // Very high allocationSize is set to work around a eclipseLink duplicate 
-    // sequence generation issue faced under heavy load.
-    @TableGenerator(name="ADDRESS_ID_GEN",
-            table="ID_GEN",
-            pkColumnName="GEN_KEY",
-            valueColumnName="GEN_VALUE",
-            pkColumnValue="ADDRESS_ID",
-            allocationSize=20000)
-    @GeneratedValue(strategy=GenerationType.TABLE,generator="ADDRESS_ID_GEN")
-    @Id
     public int getAddressID() {
         return addressID;
     }
@@ -129,6 +105,7 @@ public class Address implements java.io.Serializable {
         this.longitude = longitude;
     }
     
+/*
     @Override
     public String toString() {
         StringBuilder sb=new StringBuilder();
@@ -140,6 +117,7 @@ public class Address implements java.io.Serializable {
         if(country != null) sb.append(COMMA + country);
         return sb.toString();
     }
+*/
 }
 
 

@@ -1,0 +1,13 @@
+1. Glassfish deploy WAR error: Class invariant violation
+
+java.lang.IllegalStateException: Class invariant violation
+at org.apache.log4j.LogManager.getLoggerRepository(LogManager.java:199)
+at org.apache.log4j.LogManager.getLogger(LogManager.java:228)
+at org.apache.log4j.Logger.getLogger(Logger.java:117)
+
+这个是log4j的一个已知bug。
+由org.apache.catalina.loader.WebappClassLoader.ENABLE_CLEAR_REFERENCES这个属性引起。它默认是TRUE，将其设置成FALSE就可以规避这个错误。
+这个问题在TOMCAT和Glassfish两个容器里都会出现，不知道其他的会不会。
+原因当这个属性为TRUE的时候，会在应用停止的时候会试图将所有为NULL的静态或不可修改字段(final)从已加载类里清除。
+
+bin/asadmin create-system-properties org.apache.catalina.loader.WebappClassLoader.ENABLE_CLEAR_REFERENCES=false

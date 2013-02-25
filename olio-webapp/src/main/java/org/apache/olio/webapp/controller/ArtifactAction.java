@@ -34,10 +34,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
-import org.apache.olio.webapp.service.uic.PersonService;
-
 /**
  * This action class serves up images. The care is taken to serve images that are user-generated
  * @author Mark Basler
@@ -94,18 +90,6 @@ public class ArtifactAction implements Action {
 
         logger.finer("Image path = " + imagePath);
         File imageFile = new File(imagePath);
-
-
-	// ++++ by majiuyue - test dubbo service
-        WebApplicationContext wactx = WebApplicationContextUtils.getWebApplicationContext(context);
-        PersonService personService = (PersonService)wactx.getBean("personService");;
-        if (personService == null)
-	  logger.severe("personService == null!!");
-        else {
-	  String val = personService.sayHello(imagePath);
-	  logger.severe("personService return \"" + val +"\"");
-        }
-	// ---- end
 
         /* Assume image exists -- This was done to reduce FileSystem interaction
         if(!fs.exists(imagePath)) {
