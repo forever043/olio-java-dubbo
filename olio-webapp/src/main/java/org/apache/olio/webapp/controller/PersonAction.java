@@ -51,9 +51,15 @@ import org.apache.olio.webapp.service.uic.PersonService;
 public class PersonAction implements Action {
 
     private Logger logger = Logger.getLogger(PersonAction.class.getName());
+    private ServletContext context;
+    private PersonService personService;
 
     public PersonAction(ServletContext context) {
         this.context = context;
+        WebApplicationContext webctx = 
+        personService = (PersonService)WebApplicationContextUtils.getWebApplicationContext(context).getBean("personService");;
+        if (personService == null)
+	  logger.severe("personService == null!!");
     }
 
     /**
@@ -272,7 +278,6 @@ public class PersonAction implements Action {
         }
         return returnURL;
     }
-    private ServletContext context;
 
     private Person addPerson(HttpServletRequest request, HttpServletResponse response) {
         String userName = request.getParameter(USER_NAME_PARAM);

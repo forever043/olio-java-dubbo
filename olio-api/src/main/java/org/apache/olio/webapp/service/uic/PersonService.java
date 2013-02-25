@@ -20,11 +20,9 @@ import org.apache.olio.webapp.model.Person;
 
 public interface PersonService {
 
-    String sayHello(String name);
-
     Person validLogin(String username, String password);
     Person getPerson(String username);
-    void addPerson(Person person);
+    String addPerson(Person person);
     void updatePerson(Person person);
     void deletePerson(String person);
     List<Person> searchPerson(String query, int maxResult);

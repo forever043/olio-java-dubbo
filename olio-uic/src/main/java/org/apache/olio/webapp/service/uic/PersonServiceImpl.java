@@ -28,9 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.dubbo.rpc.RpcContext;
 import org.apache.olio.webapp.model.Person;
 import org.apache.olio.webapp.model.PersonRowMapper;
-//import org.apache.olio.webapp.service.uic.PersonService;
 
-
+@Transactional
 public class PersonServiceImpl implements PersonService {
 
     private Logger logger = Logger.getLogger(PersonServiceImpl.class.getName());
@@ -40,21 +39,14 @@ public class PersonServiceImpl implements PersonService {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public String sayHello(String name) {
-        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" 
-                           + "Hello " + name + ", "
-                           + "request from consumer: " + RpcContext.getContext().getRemoteAddress());
-        return "Hello " + name + ", response form provider: " + RpcContext.getContext().getLocalAddress();
-    }
-
     public Person validLogin(String userName, String password) {
 	Person person = getPerson(userName);
         if (person.getPassword().equals(password)) {
-            logger.severe("user \"" + userName + "\" login OK");
+            logger.info("user \"" + userName + "\" login OK");
             return person;
         }
         else {
-            logger.severe("user \"" + userName + "\" login Failed, should be \"" + person.getPassword() + "\"");
+            logger.info("user \"" + userName + "\" login Failed, should be \"" + person.getPassword() + "\"");
             return null;
         }
     }
@@ -67,16 +59,63 @@ public class PersonServiceImpl implements PersonService {
         return person;
     }
 
-    public void addPerson(Person person) {
+    public String addPerson(Person person) {
+        String sql = "insert into PERSON (userName, password, firstName, lastName, summary, telephone, email, imageURL, imageThumbURL, timezone) values (?)";
+        jdbcTemplate.update(
+            sql,
+            new Object[] {
+                person.getUserName(),
+                person.getPassword(),
+                person.getFirstName(),
+                person.getLastName(),
+                person.getSummary(),
+                person.getTelephone(),
+                person.getEmail(),
+                person.getImageURL(),
+                person.getImageThumbURL(),
+                person.getTimezone()},
+            new int[] {
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR});
+        return person.getUserName();
     }
 
     public void updatePerson(Person person) {
     }
 
-    public void deletePerson(String person) {
+    @Transactional(rollbackFor=Exception.class)
+    public void deletePerson(String userName) {
+        Person person = getPerson(userName);
+        if (person == null)
+            return;
+        jdbcTemplate.update(
+            "delete from PERSON where userID=?",
+            new Object[]{person.getUserID()},
+            new int[]{java.sql.Types.INTEGER});
     }
 
     public List<Person> searchPerson(String query, int maxResult) {
-        return null;
+        String sql = "SELECT * FROM PERSON i WHERE i.userName LIKE " +
+                     "\'" + query + "%\'" + " ORDER BY i.userName DESC " +
+                     "limit 0," + maxResult;
+        return jdbcTemplate.query(sql, new PersonRowMapper());
     }
+
+/*
+    public String sayHello(String name) {
+        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" 
+                           + "Hello " + name + ", "
+                           + "request from consumer: " + RpcContext.getContext().getRemoteAddress());
+        return "Hello " + name + ", response form provider: " + RpcContext.getContext().getLocalAddress();
+    }
+*/
+
 }
