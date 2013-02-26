@@ -18,7 +18,7 @@
 
 package org.apache.olio.webapp.model;
 
-//import java.util.ArrayList;
+import java.util.Collection;
 import java.text.SimpleDateFormat;
 
 /*
@@ -39,25 +39,35 @@ import java.text.SimpleDateFormat;
 public class Person implements java.io.Serializable {
 
     // basic info
-    private int userID;
-    private String userName;
-    private String password;
-    private String firstName;
-    private String lastName;
-    private String summary;
-    private String telephone;
-    private String email;
-    private String imageURL;
-    private String imageThumbURL;
-    private String timezone;
-    private int addressID;
+    protected int userID;
+    protected String userName;
+    protected String password;
+    protected String firstName;
+    protected String lastName;
+    protected String summary;
+    protected String telephone;
+    protected String email;
+    protected String imageURL;
+    protected String imageThumbURL;
+    protected String timezone;
+    protected int addressID;
 
     // ext info
     private Address address;
+    private Collection<Person> friends;
+    private Collection<Invitation> incomingInvitations;
+    private Collection<Invitation> outgoingInvitations;
+    private boolean hasReceivedInvitation;
+    private int extFlag = 0;
+    public static final int PERSON_EXT_ADDRESS = 1;
+    public static final int PERSON_EXT_FRIENDS = 2;
+    public static final int PERSON_EXT_INVITATIONS_INCOMING = 4;
+    public static final int PERSON_EXT_INVITATIONS_OUTGOING = 8;
+    public static final int PERSON_EXT_ALL = 15;
 
     public Person() { }
     public Person(String userName, String password, String firstName, String lastName, String summary, String email,
-            String telephone, String imageURL, String imageThumbURL, String timezone){
+            String telephone, String imageURL, String imageThumbURL, String timezone, Address address){
         
         this.userName = userName;
         this.password=password;
@@ -69,8 +79,11 @@ public class Person implements java.io.Serializable {
         this.imageURL = imageURL;
         this.imageThumbURL = imageThumbURL;
         this.timezone = timezone;
+        this.address = address;
+        this.extFlag = PERSON_EXT_ADDRESS;
     }
     
+    // basic info
     public int getUserID() {
         return userID;
     }
@@ -108,9 +121,6 @@ public class Person implements java.io.Serializable {
     }
     public int getAddressID() {
         return addressID;
-    }
-    public Address getAddress() {
-        return address;
     }
     
     public void setUserID(int userID) {
@@ -150,11 +160,46 @@ public class Person implements java.io.Serializable {
     public void setAddressID(int addressID) {
         this.addressID = addressID;
     }
+
+    // ext info
+    public Address getAddress() {
+        if ((extFlag & PERSON_EXT_ADDRESS) == 0)
+            throw new IllegalStateException("Person.address not fetched: userName \"" + this.userName + "\"");
+        return address;
+    }
+    public Collection<Person> getFriends() {
+        if ((extFlag & PERSON_EXT_FRIENDS) == 0)
+            throw new IllegalStateException("Person.friends not fetched: userName \"" + this.userName + "\"");
+        return friends;
+    }
+    public Collection<Invitation> getIncomingInvitations() {
+        if ((extFlag & PERSON_EXT_INVITATIONS_INCOMING) == 0)
+            throw new IllegalStateException("Person.incomingInvitations not fetched: userName \"" + this.userName + "\"");
+        return incomingInvitations;
+    }
+    public Collection<Invitation> getOutgoingInvitations() {
+        if ((extFlag & PERSON_EXT_INVITATIONS_OUTGOING) == 0)
+            throw new IllegalStateException("Person.outgoingInvitations not fetched: userName \"" + this.userName + "\"");
+        return outgoingInvitations;
+    }
+
     public void setAddress(Address address) {
         this.address = address;
+        extFlag |= PERSON_EXT_ADDRESS;
     }
-    
-    
+    public void setFriends(Collection<Person> friends) {
+        this.friends = friends;
+        extFlag |= PERSON_EXT_FRIENDS;
+    }
+    public void setIncomingInvitations(Collection<Invitation> incomingInvitations) {
+        this.incomingInvitations = incomingInvitations;
+        extFlag |= PERSON_EXT_INVITATIONS_INCOMING;
+    }
+    public void setOutgoingInvitations(Collection<Invitation> outgoingInvitations) {
+        this.outgoingInvitations = outgoingInvitations;
+        extFlag |= PERSON_EXT_INVITATIONS_OUTGOING;
+    }
+
     /**
      * This method checks to make sure the class values are valid
      *
@@ -169,5 +214,13 @@ public class Person implements java.io.Serializable {
         return valMess.toArray(new String[valMess.size()]);
     }
 */
+
+    public boolean equals(Object object) {
+        if (!(object instanceof Person)) {
+            return false;
+        }
+        Person other = (Person)object;
+        return this.userName.equals(other.getUserName());
+    }
 }
 

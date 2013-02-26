@@ -17,6 +17,8 @@ package org.apache.olio.webapp.service.uic;
 
 import java.util.List;
 import org.apache.olio.webapp.model.Person;
+import org.apache.olio.webapp.model.Invitation;
+
 
 public interface PersonService {
 
@@ -27,10 +29,16 @@ public interface PersonService {
     List<Person> searchPerson(String query, int maxResult);
     
     Person findPerson(String userName);   // Fetch basic info only
-    Person getPerson(String userName);	  // Fetch all related informations
+    Person getPerson(String userName);    // Fetch all related informations
+    Person getPerson(String userName, int fetchFlag);  // Fetch selected info
 
-    List<String> getFriendsUsername(String userName);
-    Person addFriend(String userName, String friendUserName);
+    Person addFriend(int userID, int friendUserID);
+
+/*
+    List<Person> getFriends(int userID);
+    List<Invitation> getOutgoingInvitations(String userName);
+    List<Invitation> getIncomingInvitations(String userName);
+*/
 
     String sayHello(String msg);
 

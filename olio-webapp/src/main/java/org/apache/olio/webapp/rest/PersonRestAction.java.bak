@@ -20,7 +20,6 @@ package org.apache.olio.webapp.rest;
 import org.apache.olio.webapp.controller.Action;
 import org.apache.olio.webapp.model.ModelFacade;
 import org.apache.olio.webapp.model.Person;
-import org.apache.olio.webapp.model.PersonView;
 //import com.sun.javaee.blueprints.webapp.model.UserSignOn;
 import org.apache.olio.webapp.util.WebappUtil;
 import java.io.IOException;
@@ -40,8 +39,6 @@ import org.apache.olio.webapp.util.UserBean;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Logger;
-
-import org.apache.olio.webapp.service.uic.PersonService;
 
 /**
  * handles all request related to users
@@ -140,7 +137,7 @@ public class PersonRestAction implements Action {
             String friendUsername = request.getParameter(FRIEND_PARAM);
 
             if (actionType.equals(GET_FRIENDS)) {
-                PersonView p = new PersonView(getPerson(request));
+                Person p = getPerson(request);
                 if (p != null) {
                     out.write(p.getFriendsAsJson());
                 }
@@ -154,7 +151,7 @@ public class PersonRestAction implements Action {
                 out.close();
                 return null;
             } else if (actionType.equals(GET_ATTEND_EVENTS)) {
-                PersonView p = new PersonView(getPerson(request));
+                Person p = getPerson(request);
                 if (p != null) {
                     out.write(p.getAttendEventsAsJson());
                 }
@@ -222,8 +219,7 @@ public class PersonRestAction implements Action {
         }
 
         if (p != null) {
-            PersonView pv = new PersonView(p); 
-            out.write(pv.toJson());
+            out.write(p.toJson());
         }
         out.close();
         return null;
@@ -234,8 +230,8 @@ public class PersonRestAction implements Action {
      **/
     private Person getPerson(HttpServletRequest request) {
         String userName = request.getParameter(USER_NAME_PARAM);
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
-        Person person = personService.getPerson(userName);
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        Person person = mf.getPerson(userName);
         return person;
     }
 
@@ -244,8 +240,8 @@ public class PersonRestAction implements Action {
      **/
     private Person getFriend(HttpServletRequest request) {
         String userName = request.getParameter(FRIEND_PARAM);
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
-        Person person = personService.getPerson(userName);
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        Person person = mf.getPerson(userName);
         logger.finer("inside getFriend - the friend's username is " + person.getUserName());
         return person;
     }
@@ -285,10 +281,14 @@ public class PersonRestAction implements Action {
                 " last_name" + lastName +
                 " summary" + summary);
 
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, thumbImage, timezone, null);
-        userName = personService.addPerson(person);
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        //do not really need username since you set this value, not sure why it is returned
+        //String userName = mf.addPerson(person, userSignOn);
+        //changed above line to this since username already a variable name
+        //userName = mf.addPerson(person, userSignOn);
 
+        userName = mf.addPerson(person);
         logger.log(Level.FINER, "Person " + userName + " has been persisted");
         // retrieve again ???
         //person=mf.getPerson(userName);
@@ -322,8 +322,8 @@ public class PersonRestAction implements Action {
         //if these fields are null, then reuse the old file information stored
 
         //Person loggedInPerson = this.getPerson(request);
-        PersonService personService = (PersonService) context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
-        Person loggedInPerson = personService.getPerson(userName, Person.PERSON_EXT_ADDRESS);
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        Person loggedInPerson = mf.getPerson(userName);
         if (loggedInPerson != null) {
             if (thumbImage == null) {
                 thumbImage = loggedInPerson.getImageThumbURL();
@@ -357,7 +357,7 @@ public class PersonRestAction implements Action {
         person.setSummary(summary);
         person.setImageURL(imageURL);
         person.setImageThumbURL(thumbImage);
-        personService.updatePerson(person);
+        person = mf.updatePerson(person);
         logger.log(Level.FINER, "Person " + userName + " has been updated");
 
         return person;
@@ -383,12 +383,17 @@ public class PersonRestAction implements Action {
                 " last_name" + lastName +
                 " summary" + summary);
 
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, imageThumbURL, timezone, address);
-        userName = personService.addPerson(person);
-        logger.log(Level.FINER, "Person " + userName + " has been persisted");
 
-        return personService.getPerson(userName);
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+
+        //do not really need username since you set this value, not sure why it is returned
+        //String userName = mf.addPerson(person, userSignOn);
+        //changed above line to this since username already a variable name
+        //userName = mf.addPerson(person, userSignOn);
+        userName = mf.addPerson(person);
+        logger.log(Level.FINER, "Person " + userName + " has been persisted");
+        return mf.getPerson(userName);
     }
 
     private Person updateUser(HttpServletRequest request) {
@@ -405,9 +410,10 @@ public class PersonRestAction implements Action {
         String timezone = "";
         Address address = new Address();
 
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, imageThumbURL, timezone, address);
-        personService.updatePerson(person);
+
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        person = mf.updatePerson(person);
 
         logger.log(Level.FINER, "Person " + userName + " has been updated");
         return person;
@@ -416,8 +422,8 @@ public class PersonRestAction implements Action {
     private void deleteUser(HttpServletRequest request) {
         //String personId = request.getParameter(PERSON_ID_PARAM);
         String userName = request.getParameter(USER_NAME_PARAM);
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
-        personService.deletePerson(userName);
+        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        mf.deletePerson(userName);
         logger.log(Level.FINER, "Person " + userName + " has been deleted");
     }
 

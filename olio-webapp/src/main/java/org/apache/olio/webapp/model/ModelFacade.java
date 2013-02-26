@@ -110,6 +110,8 @@ public class ModelFacade implements ServletContextListener {
         useCache = Boolean.parseBoolean(sloc.getString("useLocalCache", "true"));
     }
 
+/*
+
     //public String addPerson(Person person, UserSignOn userSignOn){
     public String addPerson(Person person) {
         EntityManager em = emf.createEntityManager();
@@ -131,6 +133,7 @@ public class ModelFacade implements ServletContextListener {
         }
         return person.getUserName();
     }
+*/
 
     public int addInvitation(Person loggedInUser, Invitation invitation) {
         EntityManager em = emf.createEntityManager();
@@ -237,6 +240,7 @@ public class ModelFacade implements ServletContextListener {
         return persons;
     }
 
+/*
     @SuppressWarnings("unchecked")
     public Person getPerson(String userName) {
         logger.finest("In getPerson for " + userName);
@@ -314,38 +318,8 @@ public class ModelFacade implements ServletContextListener {
         } finally {
             em.close();
         }
-
-    /*
-    //Query q = em.createQuery("DELETE FROM Person i WHERE i.userName = :uname");
-    q.setParameter("uname", userName);
-    q.executeUpdate();
-    utx.commit();
-    } catch (Exception e) {
-    try {
-    utx.rollback();
-    } catch (Exception ex) {
     }
-    throw new RuntimeException("Error deleting person", e);
-    } finally {
-    em.close();
-    }
-    try {
-    utx.begin();
-    Query q = em.createQuery("DELETE FROM SocialEvent i WHERE i.socialEventID = :sid");
-    // q.setParameter("sid", id);
-    q.executeUpdate();
-    utx.commit();
-    } catch (Exception e) {
-    try {
-    utx.rollback();
-    } catch (Exception ex) {
-    }
-    throw new RuntimeException("Error deleting person", e);
-    } finally {
-    em.close();
-    }
-     */
-    }
+*/
 
     public void deleteEvent(int id) {
         EntityManager em = emf.createEntityManager();
@@ -381,6 +355,7 @@ public class ModelFacade implements ServletContextListener {
         resetTagCloud();
     }
 
+/*
     public Person addFriend(String userName, String friendUserName) {
         Person person;
         EntityManager em = emf.createEntityManager();
@@ -400,11 +375,6 @@ public class ModelFacade implements ServletContextListener {
         //Cache cache = CacheFactory.getCache("Person");
         //cache.put(person.getUserName(), person);
 
-        /*
-        for (Person f : person.getFriends()) {
-        logger.finer("**** ModelFacade::addFriend AFTER MERGE, friend =" + f.getUserName());
-        }
-         **/
         } catch (Exception exe) {
             try {
                 utx.rollback();
@@ -416,6 +386,7 @@ public class ModelFacade implements ServletContextListener {
         }
         return person;
     }
+*/
 
     public SocialEvent addSocialEvent(SocialEvent socialEvent, String tags) {
         // Use the set to avoid duplicates
@@ -1151,6 +1122,7 @@ public class ModelFacade implements ServletContextListener {
         return calendar;
     }
 
+/*
     public Person login(String user_name, String password) {
         logger.finest("In login for user " + user_name + " password " + password);
         if (user_name == null || password == null) {
@@ -1163,6 +1135,7 @@ public class ModelFacade implements ServletContextListener {
         }
         return null;
     }
+*/
 
     public String getYearDropDown() {
         int year = calendar.get(Calendar.YEAR);
@@ -1266,6 +1239,7 @@ public class ModelFacade implements ServletContextListener {
 
     }
 
+/*
     public Collection<Invitation> getIncomingInvitations(Person p) {
         EntityManager em = emf.createEntityManager();
         try {
@@ -1349,6 +1323,7 @@ public class ModelFacade implements ServletContextListener {
         }
         logger.finer("after deleting invitation");
     }
+*/
 
     public void resetTagCloud() {
         tagCloudStr = null;

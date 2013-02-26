@@ -112,7 +112,6 @@ public class PersonAction implements Action {
         if (actionType != null) {
             if (actionType.equalsIgnoreCase("display_person")) {
                 String username = request.getParameter("user_name");
-                //Person displayUser = mf.findPerson(username);
                 Person displayUser = personService.getPerson(username);
                 if (displayUser != null) {
                     //get posted events
@@ -124,20 +123,20 @@ public class PersonAction implements Action {
                 }
             } else if (actionType.equalsIgnoreCase("display_friends")) {
                 String username = request.getParameter("user_name");
-                Person displayUser = mf.findPerson(username);
+                Person displayUser = personService.getPerson(username, Person.PERSON_EXT_FRIENDS);
                 request.setAttribute("displayPerson", displayUser);
                 //addition here for pages
-                 int index = WebappUtil.getIntProperty(request.getParameter("index"));
+                int index = WebappUtil.getIntProperty(request.getParameter("index"));
                  
-            List<Person> list = (List)displayUser.getFriends();
+                List<Person> list = (List)displayUser.getFriends();
                 
-            if (list != null) {
-                List friendList = WebappUtil.getPagedList(list, index);                
-                request.setAttribute("numPages", WebappUtil.getNumPages(list));
-                request.setAttribute("pageUrl", request.getContextPath() + "/person?user_name="+username+"&page=friends.jsp&actionType=display_friends");
-                request.setAttribute("itemList", friendList);
-                request.setAttribute("index", index);
-            }
+                if (list != null) {
+                    List friendList = WebappUtil.getPagedList(list, index);                
+                    request.setAttribute("numPages", WebappUtil.getNumPages(list));
+                    request.setAttribute("pageUrl", request.getContextPath() + "/person?user_name="+username+"&page=friends.jsp&actionType=display_friends");
+                    request.setAttribute("itemList", friendList);
+                    request.setAttribute("index", index);
+                }
           
                 returnURL = "/site.jsp?page=friends.jsp";
 
@@ -151,7 +150,6 @@ public class PersonAction implements Action {
                 returnURL = "/site.jsp?page=addPerson.jsp";
             } else if (actionType.equalsIgnoreCase("display_myPostedEvents")) {
                 String username = request.getParameter("user_name");
-                //Person displayUser = mf.findPerson(username);
                 Person displayUser = personService.getPerson(username);
                 if (displayUser != null) {
                     //get posted events

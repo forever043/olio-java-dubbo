@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.dubbo.rpc.RpcContext;
 import org.apache.olio.webapp.model.Person;
 import org.apache.olio.webapp.model.Address;
+import org.apache.olio.webapp.model.Invitation;
 import org.apache.olio.webapp.model.PersonRowMapper;
 import org.apache.olio.webapp.model.AddressRowMapper;
 
@@ -62,17 +63,39 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public Person getPerson(String userName) {
-        Person person = findPerson(userName);
-        Address address = (Address)jdbcTemplate.queryForObject(
-            "SELECT * FROM ADDRESS a WHERE a.AddressID = ?",
-            new Object[]{person.getAddressID()},
-            new AddressRowMapper());  
-        person.setAddress(address);
+        return getPerson(userName, Person.PERSON_EXT_ALL);
+    }
+
+    public Person getPerson(String userName, int fetchFlag) {
+        Person person;
+
+        // Fetch basic info
+        person = findPerson(userName);
+        if (person == null)
+            return null;
+
+        // Fetch ext info
+        if ((fetchFlag & Person.PERSON_EXT_ALL) != 0) {
+            Address address = (Address)jdbcTemplate.queryForObject(
+                "SELECT * FROM ADDRESS a WHERE a.AddressID = ?",
+                new Object[]{person.getAddressID()},
+                new AddressRowMapper());  
+            person.setAddress(address);
+        }
+        if ((fetchFlag & Person.PERSON_EXT_FRIENDS) != 0)
+            person.setFriends(getFriends(person.getUserID()));
+        if ((fetchFlag & Person.PERSON_EXT_INVITATIONS_INCOMING) != 0)
+            person.setIncomingInvitations(this.getIncomingInvitations(userName));
+        if ((fetchFlag & Person.PERSON_EXT_INVITATIONS_OUTGOING) != 0)
+            person.setOutgoingInvitations(this.getOutgoingInvitations(userName));
+
         return person;
     }
 
+
     public String addPerson(Person person) {
-        String sql = "insert into PERSON (userName, password, firstName, lastName, summary, telephone, email, imageURL, imageThumbURL, timezone) values (?)";
+        String sql = "insert into PERSON (userName, password, firstName, lastName, summary, telephone, email, imageURL, imageThumbURL, timezone) " +
+                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(
             sql,
             new Object[] {
@@ -101,6 +124,35 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public void updatePerson(Person person) {
+        String sql = "update PERSON set userName=?, password=?, firstName=?, lastName=?, summary=?, telephone=?, email=?, imageURL=?, imageThumbURL=?, timezone=? " +
+                     "where userID=?";
+        jdbcTemplate.update(                                                      
+            sql,
+            new Object[] {                                                        
+                person.getUserName(),
+                person.getPassword(),
+                person.getFirstName(),
+                person.getLastName(),                                             
+                person.getSummary(),                                              
+                person.getTelephone(),                                            
+                person.getEmail(),
+                person.getImageURL(),
+                person.getImageThumbURL(),
+                person.getTimezone(),
+                person.getUserID()},
+            new int[] {
+                java.sql.Types.VARCHAR,                                           
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,                                           
+                java.sql.Types.VARCHAR,                                           
+                java.sql.Types.VARCHAR,                                           
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.INTEGER});
+        // TODO: Update Address
     }
 
     @Transactional(rollbackFor=Exception.class)
@@ -121,12 +173,19 @@ public class PersonServiceImpl implements PersonService {
         return jdbcTemplate.query(sql, new PersonRowMapper());
     }
 
-    public List<String> getFriendsUsername(String userName) {
-        String sql = "select UserName from PERSON_PERSON inner join PERSON on friends_USERID=USERID where Person_USERID=5004";
-        return jdbcTemplate.queryForList(sql);
+    public List<Person> getFriends(int userID) {
+        String sql = "select PERSON.* from PERSON_PERSON inner join PERSON on friends_USERID=USERID where Person_USERID=?";
+        return jdbcTemplate.query(sql, new Object[]{userID}, new PersonRowMapper());
+    }
+        
+    public Person addFriend(int userID, int friendUserID) {
+        return null;
     }
 
-    public Person addFriend(String userName, String friendUserName) {
+    public List<Invitation> getOutgoingInvitations(String userName) {
+        return null;
+    }
+    public List<Invitation> getIncomingInvitations(String userName) {
         return null;
     }
 

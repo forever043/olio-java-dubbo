@@ -17,60 +17,14 @@
  */
 package org.apache.olio.webapp.model;
 
-import java.io.Serializable;
-import javax.persistence.Entity;
-
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.TableGenerator;
-import javax.persistence.JoinColumn;
 import java.util.logging.Logger;
 
-/**
- * Entity class Invitation
- * /
-
-/**
- *
- * @author Kim LiChong
- */
-@Entity
-@Table(name = "INVITATION")
-public class Invitation implements Serializable {
+public class Invitation implements java.io.Serializable {
 
     private transient Logger logger = Logger.getLogger(Invitation.class.getName());
-    /* EclipseLink 1.0 sometimes generated the same ID 
-     * under heavy load leading to transaction failures during the insertion of
-     * SocialEvents (PK violation). The problem seems to happen when the allocation size is exceeded.
-     *
-     * This is being investigated, temporary solution is to use a large allocationSize
-     * to reduce the occurance of this issue.
-     */
-    @TableGenerator(name = "INVITATION_ID_GEN",
-    table = "ID_GEN",
-    pkColumnName = "GEN_KEY",
-    valueColumnName = "GEN_VALUE",
-    pkColumnValue = "INVITATION_ID",
-    allocationSize = 50000)
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "INVITATION_ID_GEN")
-    @Id
+
     private int invitationID;
-    @ManyToOne
-    @JoinColumn(
-         name = "REQUESTOR_USERNAME",
-         referencedColumnName = "USERNAME",
-         unique = true
-    )
     private Person requestor;
-    @ManyToOne
-    @JoinColumn(
-         name = "CANDIDATE_USERNAME",
-         referencedColumnName = "USERNAME",
-         unique = true
-    )
     private Person candidate;
     private boolean isAccepted;
 
@@ -115,23 +69,6 @@ public class Invitation implements Serializable {
     public Invitation() {
     }
 
-    /*
-    public boolean equals(Invitation inv) {
-    String requestorUsername = inv.getRequestor().getUserName();
-    String candidateUsername = inv.getCandidate().getUserName();
-    boolean returnValue = false;
-
-    if ((requestorUsername != null && this.getRequestor().getUserName().equalsIgnoreCase(requestorUsername))
-    && (candidateUsername != null && this.getCandidate().getUserName().equalsIgnoreCase(candidateUsername))) {
-    returnValue = true;
-    } else {
-    returnValue = false;
-    }
-
-    return returnValue;
-
-    }
-     */
     @Override
     public boolean equals(Object o) {
         boolean returnValue = false;
