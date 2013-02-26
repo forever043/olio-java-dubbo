@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
         
 public class Person implements java.io.Serializable {
 
+    // basic info
     private int userID;
     private String userName;
     private String password;
@@ -49,6 +50,10 @@ public class Person implements java.io.Serializable {
     private String imageURL;
     private String imageThumbURL;
     private String timezone;
+    private int addressID;
+
+    // ext info
+    private Address address;
 
     public Person() { }
     public Person(String userName, String password, String firstName, String lastName, String summary, String email,
@@ -101,6 +106,12 @@ public class Person implements java.io.Serializable {
     public String getTimezone() {
         return timezone;
     }
+    public int getAddressID() {
+        return addressID;
+    }
+    public Address getAddress() {
+        return address;
+    }
     
     public void setUserID(int userID) {
         this.userID = userID;
@@ -135,6 +146,14 @@ public class Person implements java.io.Serializable {
     public void setTimezone(String timezone) {
         this.timezone=timezone;
     }
+
+    public void setAddressID(int addressID) {
+        this.addressID = addressID;
+    }
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+    
     
     /**
      * This method checks to make sure the class values are valid

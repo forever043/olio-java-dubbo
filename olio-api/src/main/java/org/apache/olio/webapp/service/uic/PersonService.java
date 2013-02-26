@@ -20,12 +20,17 @@ import org.apache.olio.webapp.model.Person;
 
 public interface PersonService {
 
-    Person validLogin(String username, String password);
-    Person getPerson(String username);
+    Person validLogin(String userName, String password);
     String addPerson(Person person);
     void updatePerson(Person person);
     void deletePerson(String person);
     List<Person> searchPerson(String query, int maxResult);
+    
+    Person findPerson(String userName);   // Fetch basic info only
+    Person getPerson(String userName);	  // Fetch all related informations
+
+    List<String> getFriendsUsername(String userName);
+    Person addFriend(String userName, String friendUserName);
 
     String sayHello(String msg);
 

@@ -18,7 +18,7 @@
 
 package org.apache.olio.webapp.model;
 
-public class Address {
+public class Address  implements java.io.Serializable {
     
     private int addressID;
     private String street1;

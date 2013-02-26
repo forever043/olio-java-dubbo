@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.olio.webapp.service.uic.PersonService;
+import static org.apache.olio.webapp.controller.WebConstants.*;
 
 //import com.sun.javaee.blueprints.webapp.model.Item;
 //import com.sun.javaee.blueprints.webapp.model.Tag;
@@ -74,7 +75,10 @@ public class ControllerServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+
         ServletContext context = getServletContext();
+        context.setAttribute(DUBBO_PERSON_SERVICE_KEY, personService);
+
         actionMap.put("/api/person", new PersonRestAction(context));
         actionMap.put("/api/event", new EventRestAction(context));
         actionMap.put("/person", new PersonAction(context));

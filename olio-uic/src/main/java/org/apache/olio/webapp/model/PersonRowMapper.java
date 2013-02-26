@@ -18,6 +18,7 @@ public class PersonRowMapper implements RowMapper {
         person.setImageURL(rs.getString("ImageURL"));
         person.setImageThumbURL(rs.getString("ImageThumbURL"));
         person.setTimezone(rs.getString("Timezone"));
+        person.setAddressID(rs.getInt("ADDRESS_ADDRESSID"));
         return person;
     }
 }

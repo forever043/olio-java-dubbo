@@ -27,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.dubbo.rpc.RpcContext;
 import org.apache.olio.webapp.model.Person;
+import org.apache.olio.webapp.model.Address;
 import org.apache.olio.webapp.model.PersonRowMapper;
+import org.apache.olio.webapp.model.AddressRowMapper;
 
 @Transactional
 public class PersonServiceImpl implements PersonService {
@@ -40,7 +42,7 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public Person validLogin(String userName, String password) {
-	Person person = getPerson(userName);
+	Person person = findPerson(userName);
         if (person.getPassword().equals(password)) {
             logger.info("user \"" + userName + "\" login OK");
             return person;
@@ -51,11 +53,21 @@ public class PersonServiceImpl implements PersonService {
         }
     }
 
-    public Person getPerson(String userName) {
+    public Person findPerson(String userName) {
         Person person = (Person)jdbcTemplate.queryForObject(
             "SELECT * FROM PERSON u WHERE u.userName = ?",
             new Object[]{userName},
             new PersonRowMapper());  
+        return person;
+    }
+
+    public Person getPerson(String userName) {
+        Person person = findPerson(userName);
+        Address address = (Address)jdbcTemplate.queryForObject(
+            "SELECT * FROM ADDRESS a WHERE a.AddressID = ?",
+            new Object[]{person.getAddressID()},
+            new AddressRowMapper());  
+        person.setAddress(address);
         return person;
     }
 
@@ -107,6 +119,15 @@ public class PersonServiceImpl implements PersonService {
                      "\'" + query + "%\'" + " ORDER BY i.userName DESC " +
                      "limit 0," + maxResult;
         return jdbcTemplate.query(sql, new PersonRowMapper());
+    }
+
+    public List<String> getFriendsUsername(String userName) {
+        String sql = "select UserName from PERSON_PERSON inner join PERSON on friends_USERID=USERID where Person_USERID=5004";
+        return jdbcTemplate.queryForList(sql);
+    }
+
+    public Person addFriend(String userName, String friendUserName) {
+        return null;
     }
 
     public String sayHello(String name) {

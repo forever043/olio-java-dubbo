@@ -74,6 +74,8 @@ public class PersonAction implements Action {
 
         String actionType = request.getParameter(ACTION_TYPE_PARAM);
         ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);	// ++ dubbo
+
         String returnURL = null;
         String path = request.getPathInfo();
         if (path != null && path.equals("/login")) {
@@ -86,25 +88,11 @@ public class PersonAction implements Action {
                 request.getSession().setAttribute("userBean", userBean);
             }
             if (user_name != null && password != null) {
-                Person p = mf.login(user_name, password);
+	        Person p = personService.validLogin(user_name, password);
                 if (p != null) {
                     userBean.setDisplayMessage("Successfully logged in");
                     userBean.setLoggedInPerson(p);
                 }
-	// majiuyue - dubbo test
-        WebApplicationContext wactx = WebApplicationContextUtils.getWebApplicationContext(context);
-        PersonService personService = (PersonService)wactx.getBean("personService");;
-        if (personService == null)
-	  logger.severe("personService == null!!");
-        else {
-	  Person per = personService.validLogin(user_name, password);
-          if (per != null)
-	    logger.severe("Person " +per.getFirstName()+per.getLastName()+" login OK");
-          else 
-	    logger.severe("Person " +user_name+" login Failed");
-        }
-	// majiuyue - end
-		
             } else {
                 userBean.setDisplayMessage("Log in failed for user_name = " + user_name +
                         " password = " + password);
@@ -124,7 +112,8 @@ public class PersonAction implements Action {
         if (actionType != null) {
             if (actionType.equalsIgnoreCase("display_person")) {
                 String username = request.getParameter("user_name");
-                Person displayUser = mf.findPerson(username);
+                //Person displayUser = mf.findPerson(username);
+                Person displayUser = personService.getPerson(username);
                 if (displayUser != null) {
                     //get posted events
                     Collection<SocialEvent> userEvents = mf.getPostedEvents(displayUser);
@@ -162,7 +151,8 @@ public class PersonAction implements Action {
                 returnURL = "/site.jsp?page=addPerson.jsp";
             } else if (actionType.equalsIgnoreCase("display_myPostedEvents")) {
                 String username = request.getParameter("user_name");
-                Person displayUser = mf.findPerson(username);
+                //Person displayUser = mf.findPerson(username);
+                Person displayUser = personService.getPerson(username);
                 if (displayUser != null) {
                     //get posted events
                     Collection<SocialEvent> myPostedEvents = mf.getPostedEvents(displayUser);
