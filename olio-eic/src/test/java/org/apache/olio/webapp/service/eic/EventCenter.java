@@ -15,8 +15,10 @@
  */
 package org.apache.olio.webapp.service.eic;
 
-public interface EventService {
+public class EventCenter {
 
-	String sayHello(String name);
+	public static void main(String[] args) {
+        com.alibaba.dubbo.container.Main.main(args);
+	}
 
 }

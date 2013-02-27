@@ -20,35 +20,12 @@ package org.apache.olio.webapp.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.CascadeType;
-import javax.persistence.TableGenerator;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 
-/**
- * @author Mark Basler
- * @author Binu John
- * @author Kim Lichong
- */
-
-@Entity
-@Table (name="SOCIALEVENT")
 public class SocialEvent implements java.io.Serializable {
     
     private int socialEventID;
@@ -62,10 +39,12 @@ public class SocialEvent implements java.io.Serializable {
     private String imageThumbURL;
     private String literatureURL;
     private String telephone;
-    private Address address;
     private int totalScore;
     private int numberOfVotes;
     private int disabled;
+    private int addressID;
+
+    private Address address;
     private List<SocialEventTag> tags = new ArrayList<SocialEventTag>();
     private Collection<Person> attendees = new ArrayList<Person>();
     private Collection<CommentsRating> comments = new ArrayList<CommentsRating>();
@@ -90,21 +69,6 @@ public class SocialEvent implements java.io.Serializable {
     }
 
 
-   /* EclipseLink 1.0 sometimes generated the same ID 
-    * under heavy load leading to transaction failures during the insertion of
-    * SocialEvents (PK violation). The problem seems to happen when the allocation size is exceeded.
-    * 
-    * This is being investigated, temporary solution is to use a large allocationSize
-    * to reduce the occurance of this issue.
-    */
-    @TableGenerator(name="SOCIAL_EVENT_ID_GEN",
-    table="ID_GEN",
-            pkColumnName="GEN_KEY",
-            valueColumnName="GEN_VALUE",
-            pkColumnValue="SOCIAL_EVENT_ID",
-            allocationSize=50000)
-    @GeneratedValue(strategy=GenerationType.TABLE,generator="SOCIAL_EVENT_ID_GEN")
-    @Id
     public int getSocialEventID() {
         return socialEventID;
     }
@@ -112,7 +76,6 @@ public class SocialEvent implements java.io.Serializable {
         return title;
     }
     
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -120,13 +83,6 @@ public class SocialEvent implements java.io.Serializable {
         return submitterUserName;
     }
     
-    /* The default fetch type for one-to-one is EAGER.
-     * However, for SocialEvents, this information may not be required in cases
-     * where the event is listed for attendees, tags and comments.
-     * So make it lazy. The Address has to be fetched in the ModelFacade when
-     * the event is loaded.
-     * */
-    @OneToOne(cascade={CascadeType.PERSIST, CascadeType.MERGE}, fetch=FetchType.LAZY)
     public Address getAddress() {
         return address;
     }
@@ -159,20 +115,10 @@ public class SocialEvent implements java.io.Serializable {
     public String getTelephone() {
         return telephone;
     }
-    
-/* majiuyue - should be deleted
-    public String getTimezone() {
-        return literatureURL;
+    public int getAddressID() {
+        return addressID;
     }
-*/
-
-/*
-    @ManyToMany
-    @JoinTable(name = "PERSON_SOCIALEVENT",
-               joinColumns = @JoinColumn(name = "SOCIALEVENTID",
-                                         referencedColumnName = "SOCIALEVENTID"),
-        inverseJoinColumns = @JoinColumn(name = "USERNAME",
-                                         referencedColumnName = "USERNAME"))
+    
     public Collection<Person> getAttendees() {
         return attendees;
     }
@@ -180,7 +126,6 @@ public class SocialEvent implements java.io.Serializable {
     public void setAttendees(Collection<Person> attendees) {
         this.attendees=attendees;
     }
-*/
     
     public void setSocialEventID(int socialEventID) {
         this.socialEventID = socialEventID;
@@ -225,9 +170,11 @@ public class SocialEvent implements java.io.Serializable {
     public void setTelephone(String telephone) {
         this.telephone=telephone;
     }
+    public void setAddressID(int addressID) {
+        this.addressID = addressID;
+    }
 
     
-    @ManyToMany(mappedBy = "socialEvents")
     public List<SocialEventTag> getTags() {
         return tags;
     }
@@ -286,30 +233,6 @@ public class SocialEvent implements java.io.Serializable {
     }
     
     
-    /**
-     * This method checks to make sure the class values are valid
-     *
-     * @return Message(s) of validation errors or and empty array (zero length) if class is valid
-     */
-/*
-    public String[] validateWithMessage() {
-        ArrayList<String> valMess=new ArrayList<String>();
-        
-        if(title == null || title.equals("")) {
-            valMess.add(WebappUtil.getMessage("invalid_socialEvent_name"));
-        }
-        
-        // make sure there isn't a script/link tag in the description
-        if(description == null || description.length() < 1 || description.indexOf("<script") > -1 || description.indexOf("<link") > -1) {
-            valMess.add(WebappUtil.getMessage("invalid_social_event_description"));
-        }
-        
-        return valMess.toArray(new String[valMess.size()]);
-    }
-*/
-    
-    
-    @OneToMany(mappedBy = "socialEvent")
     public Collection<CommentsRating> getComments() {
         return comments;
     }
@@ -322,7 +245,6 @@ public class SocialEvent implements java.io.Serializable {
         this.comments.add(cr);
     }
     
-    @Transient
     public int getNumAttendees() {
         if (attendees != null)
             return attendees.size();
@@ -332,13 +254,6 @@ public class SocialEvent implements java.io.Serializable {
     public void addTag (SocialEventTag tag) {
         tags.add (tag);
     }
-    
-/*
-    @Transient
-    public String getTagCloud() {
-        return WebappUtil.createTagCloud(tags);
-    }
-*/
     
     public void addCommentsRating (CommentsRating com) {
         comments.add (com);
@@ -367,7 +282,6 @@ public class SocialEvent implements java.io.Serializable {
         this.summary = summary;
     }
     
-    @Override
     public boolean equals(Object object) {
         if (!(object instanceof SocialEvent)) {
             return false;
@@ -376,7 +290,6 @@ public class SocialEvent implements java.io.Serializable {
         return socialEventID == other.getSocialEventID();
     }
     
-    @Transient
     public String getTagsAsString () {
         if (tags == null || tags.size() == 0)
             return "";
@@ -389,42 +302,5 @@ public class SocialEvent implements java.io.Serializable {
         
         return strb.toString();
     }
-    
-/*
-    @Transient
-    public String getDayDropDown() {
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTimeInMillis(this.eventTimestamp.getTime());
-        return ModelFacade.getDayDropDown(cal.get(Calendar.DATE));
-    }
-    
-    @Transient
-    public String getMonthDropDown() {
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTimeInMillis(this.eventTimestamp.getTime());
-        return ModelFacade.getMonthDropDown(cal.get(Calendar.MONTH)+1);
-    }
-    
-    @Transient
-    public String getYearDropDown() {
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTimeInMillis(this.eventTimestamp.getTime());
-        return ModelFacade.getYearDropDown(cal.get(Calendar.YEAR));
-    }
-    
-    @Transient
-    public String getHourDropDown() {
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTimeInMillis(this.eventTimestamp.getTime());
-        return ModelFacade.getHourDropDown(cal.get(Calendar.HOUR));
-    }
-    
-    @Transient
-    public String getMinuteDropDown() {
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTimeInMillis(this.eventTimestamp.getTime());
-        return ModelFacade.getMinuteDropDown(cal.get(Calendar.MINUTE));
-    }
-*/
 }
 

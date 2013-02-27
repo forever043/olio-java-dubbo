@@ -20,10 +20,10 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
 	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
 	
-	<bean id="personService" class="org.apache.olio.webapp.service.PersonServiceImpl">
+	<bean id="eventService" class="org.apache.olio.webapp.service.EventServiceImpl">
             <property name="dataSource" ref="dataSource" /> 
         </bean>
 	
-	<dubbo:service interface="org.apache.olio.webapp.service.PersonService" ref="personService" />
+	<dubbo:service interface="org.apache.olio.webapp.service.EventService" ref="eventService" />
 	
 </beans>

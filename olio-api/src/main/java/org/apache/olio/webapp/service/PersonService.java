@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.olio.webapp.service.uic;
+package org.apache.olio.webapp.service;
 
 import java.util.List;
 import org.apache.olio.webapp.model.Person;

@@ -30,7 +30,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.olio.webapp.service.uic.PersonService;
+import org.apache.olio.webapp.service.PersonService;
+import org.apache.olio.webapp.service.EventService;
 import static org.apache.olio.webapp.controller.WebConstants.*;
 
 //import com.sun.javaee.blueprints.webapp.model.Item;
@@ -49,6 +50,7 @@ public class ControllerServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(ControllerServlet.class.getName());
     private ActionMap actionMap = new ActionMap();
     private PersonService personService;
+    private EventService eventService;
     
     @Override
     public void destroy() {
@@ -78,6 +80,7 @@ public class ControllerServlet extends HttpServlet {
 
         ServletContext context = getServletContext();
         context.setAttribute(DUBBO_PERSON_SERVICE_KEY, personService);
+        context.setAttribute(DUBBO_EVENT_SERVICE_KEY,  eventService);
 
         actionMap.put("/api/person", new PersonRestAction(context));
         actionMap.put("/api/event", new EventRestAction(context));
@@ -90,10 +93,15 @@ public class ControllerServlet extends HttpServlet {
 
         String ret = personService.sayHello("ControllerServlet");
         logger.severe(ret);
+        ret = eventService.sayHello("ControllerServlet");
+        logger.severe(ret);
     }
 
     public void setPersonService(PersonService personService) {
         this.personService = personService;
+    }
+    public void setEventService(EventService eventService) {
+        this.eventService = eventService;
     }
     
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

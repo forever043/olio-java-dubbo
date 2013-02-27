@@ -110,8 +110,6 @@ public class ModelFacade implements ServletContextListener {
         useCache = Boolean.parseBoolean(sloc.getString("useLocalCache", "true"));
     }
 
-/*
-
     //public String addPerson(Person person, UserSignOn userSignOn){
     public String addPerson(Person person) {
         EntityManager em = emf.createEntityManager();
@@ -133,7 +131,6 @@ public class ModelFacade implements ServletContextListener {
         }
         return person.getUserName();
     }
-*/
 
     public int addInvitation(Person loggedInUser, Invitation invitation) {
         EntityManager em = emf.createEntityManager();
@@ -240,7 +237,6 @@ public class ModelFacade implements ServletContextListener {
         return persons;
     }
 
-/*
     @SuppressWarnings("unchecked")
     public Person getPerson(String userName) {
         logger.finest("In getPerson for " + userName);
@@ -257,12 +253,14 @@ public class ModelFacade implements ServletContextListener {
         // entities, other JPA implementations may not.
         // Manual loading of these relationships are done to support other implementations.
         // Making it eager fetch will cause cascade fetching.
+/* TODO: majiuyue
         if (person != null) {
             person.getAddress();
             person.getFriends();
             person.getSocialEvents();
             person.getIncomingInvitations();
         }
+*/
         // em.close();
 
         return person;
@@ -319,7 +317,6 @@ public class ModelFacade implements ServletContextListener {
             em.close();
         }
     }
-*/
 
     public void deleteEvent(int id) {
         EntityManager em = emf.createEntityManager();
@@ -355,7 +352,6 @@ public class ModelFacade implements ServletContextListener {
         resetTagCloud();
     }
 
-/*
     public Person addFriend(String userName, String friendUserName) {
         Person person;
         EntityManager em = emf.createEntityManager();
@@ -386,7 +382,6 @@ public class ModelFacade implements ServletContextListener {
         }
         return person;
     }
-*/
 
     public SocialEvent addSocialEvent(SocialEvent socialEvent, String tags) {
         // Use the set to avoid duplicates
@@ -1263,6 +1258,7 @@ public class ModelFacade implements ServletContextListener {
             em.close();
         }
     }
+*/
 
     @SuppressWarnings("unchecked")
     public void deleteInvitation(Person loggedInUser, Invitation inv) {
@@ -1323,7 +1319,6 @@ public class ModelFacade implements ServletContextListener {
         }
         logger.finer("after deleting invitation");
     }
-*/
 
     public void resetTagCloud() {
         tagCloudStr = null;

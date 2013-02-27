@@ -15,11 +15,15 @@
     <dubbo:registry address="zookeeper://xen-dev:2181" />
      
     <!-- which service to consume? -->
-    <dubbo:reference id="personService" interface="org.apache.olio.webapp.service.uic.PersonService" />
+    <dubbo:reference id="personService" interface="org.apache.olio.webapp.service.PersonService" />
+    <dubbo:reference id="eventService" interface="org.apache.olio.webapp.service.EventService" />
 
     <bean id="ControllerServlet" class="org.apache.olio.webapp.controller.ControllerServlet">
        <property name="personService">
            <ref bean="personService"/>
+       </property>
+       <property name="eventService">
+           <ref bean="eventService"/>
        </property>
     </bean>
 

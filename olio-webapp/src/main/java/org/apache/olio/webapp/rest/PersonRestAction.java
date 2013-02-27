@@ -41,7 +41,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
-import org.apache.olio.webapp.service.uic.PersonService;
+import org.apache.olio.webapp.service.PersonService;
 
 /**
  * handles all request related to users

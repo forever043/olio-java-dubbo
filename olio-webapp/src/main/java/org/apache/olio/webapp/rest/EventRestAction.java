@@ -47,6 +47,8 @@ import java.util.Hashtable;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import org.apache.olio.webapp.service.EventService;
+
 /**
  * handles all request related to users
  * @author Mark Basler
@@ -175,13 +177,16 @@ public class EventRestAction implements Action {
             }
 
             if (!already) {
+                EventService es = (EventService) context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
                 if (mode == UPDATE_MODE_ADD_ATTENDEE) {
-                    event.getAttendees().add(person);
-                    person.getSocialEvents().add(event);
+                    //event.getAttendees().add(person);
+                    //person.getSocialEvents().add(event);
+                    es.attendSocialEvent(event.getSocialEventID(), person.getUserName());
                     status = "added";
                 } else {
-                    event.getAttendees().remove(person);
-                    person.getSocialEvents().remove(event);
+                    //event.getAttendees().remove(person);
+                    //person.getSocialEvents().remove(event);
+                    es.quitSocialEvent(event.getSocialEventID(), person.getUserName());
                     status = "deleted";
                 }
 

@@ -30,6 +30,7 @@ public class WebConstants {
 
     /** DubboService KEY */
     public static final String DUBBO_PERSON_SERVICE_KEY = "dubbo_person_service";
+    public static final String DUBBO_EVENT_SERVICE_KEY = "dubbo_event_service";
     
     /** REST action type */
     /** represents action parameter in a request */

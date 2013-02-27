@@ -40,7 +40,7 @@ import java.util.logging.Logger;
 
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-import org.apache.olio.webapp.service.uic.PersonService;
+import org.apache.olio.webapp.service.PersonService;
 
 /**
  * handles all request related to users
@@ -293,19 +293,18 @@ public class PersonAction implements Action {
                 " summary" + summary);
 
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, thumbImage, timezone, address);
-        ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
+        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         //do not really need username since you set this value, not sure why it is returned
         //String userName = mf.addPerson(person, userSignOn);
         //changed above line to this since username already a variable name
         //userName = mf.addPerson(person, userSignOn);
 
-        userName = mf.addPerson(person);
+        userName = personService.addPerson(person);
         logger.finer("Person " + userName + " has been persisted");
         // retrieve again ???
         //person=mf.getPerson(userName);
         // login person
         SecurityHandler.getInstance().setLoggedInPerson(request, person);
         return person;
-
     }
 }

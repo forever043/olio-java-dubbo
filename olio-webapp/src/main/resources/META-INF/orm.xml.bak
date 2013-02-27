@@ -25,6 +25,7 @@
     <xml-mapping-metadata-complete />
   </persistence-unit-metadata>
 -->
+    <!--
     <entity name="SocialEvent" class="org.apache.olio.webapp.model.SocialEvent">
         <named-query name="fetchComments">
           <query>SELECT c FROM CommentsRating c JOIN FETCH c.userName WHERE c.socialEvent.socialEventID = :id</query>
@@ -76,6 +77,7 @@
           <hint name="eclipselink.query-results-cache.size" value="500"/>
         </named-query>
     </entity>
+    -->
     <entity name="Address" class="org.apache.olio.webapp.model.Address"/>
     <entity name="Invitation" class="org.apache.olio.webapp.model.Invitation"/>
     <entity name="CommentsRating" class="org.apache.olio.webapp.model.CommentsRating"/>

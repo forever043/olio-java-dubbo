@@ -37,8 +37,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.olio.webapp.cache.CacheFactory;
 
-import org.apache.olio.webapp.service.EventService;
-
 /**
  * Handles action for the event - update of comments and ratings.
  * 
@@ -55,11 +53,10 @@ public class EventAction implements Action {
 
     public String process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ModelFacade mf= (ModelFacade) context.getAttribute(MF_KEY);
-        EventService es = (EventService) context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
 
         String path = request.getPathInfo();
         if (path.equals("/list")) {
-            return listEvents (request, response, mf, es);
+            return listEvents (request, response, mf);
         }
         if (path.equals("/addEvent") || path.equals("/updateEvent")) {
             return addEvent (request, response);
@@ -163,7 +160,7 @@ public class EventAction implements Action {
         }
     }
 
-    private String listEvents(HttpServletRequest request, HttpServletResponse response, ModelFacade mf, EventService es) throws IOException, ServletException {
+    private String listEvents(HttpServletRequest request, HttpServletResponse response, ModelFacade mf) throws IOException, ServletException {
         int index = WebappUtil.getIntProperty(request.getParameter("index"));
         String zip = request.getParameter("zipcode");
         String order = request.getParameter("order");
@@ -221,7 +218,7 @@ public class EventAction implements Action {
                     cl = new CachedList(cacheKey);
 
                     // get a new cacheable page/partial
-                    cobj = createCachePageObject(queryMap, response, request, es);
+                    cobj = createCachePageObject(queryMap, response, request, mf);
                     cl.put(index, cobj); 
 
 
@@ -234,7 +231,7 @@ public class EventAction implements Action {
                     // something in the cache
                     cobj = cl.get(index); // we are using this whatever
 
-                    Object newCobj = createCachePageObject(queryMap, response, request, es);
+                    Object newCobj = createCachePageObject(queryMap, response, request, mf);
                     cl.put(index, newCobj); // replaces existing value
                      if (cache.needsRefresh(true, cacheKey)) {
                         cache.put(cacheKey, cl, CacheFactory.getInstance().getCacheExpireInSeconds());
@@ -258,18 +255,18 @@ public class EventAction implements Action {
             }
         }
 
-        return prepNoCacheRequest(queryMap, response, request, es);
+        return prepNoCacheRequest(queryMap, response, request, mf);
 
     }
 
     private Object createCachePageObject(Map<String, Object> queryMap,
                                          HttpServletResponse response,
                                          HttpServletRequest request,
-                                         EventService es) throws java.io.IOException,
+                                         ModelFacade mf) throws java.io.IOException,
                                                                 javax.servlet.ServletException {
 
         // Fill the cache
-        List<SocialEvent> list = es.getSocialEvents(queryMap);
+        List<SocialEvent> list = mf.getSocialEvents(queryMap);
         int numPages = 1;
         if (list != null) {
             Object o = queryMap.get("listSize");
@@ -285,11 +282,11 @@ public class EventAction implements Action {
         return WebappUtil.acquirePageContent("/eventList.jsp", request, response);
     }
 
-    private String prepNoCacheRequest(Map<String, Object> queryMap, HttpServletResponse response, HttpServletRequest request, EventService es) {
+    private String prepNoCacheRequest(Map<String, Object> queryMap, HttpServletResponse response, HttpServletRequest request, ModelFacade mf) {
 
         String pageType = request.getParameter("displayType");
         int index = WebappUtil.getIntProperty(request.getParameter("index"));
-        List<SocialEvent> list = es.getSocialEvents(queryMap);
+        List<SocialEvent> list = mf.getSocialEvents(queryMap);
 
         int numPages = 1;
         if (list != null) {

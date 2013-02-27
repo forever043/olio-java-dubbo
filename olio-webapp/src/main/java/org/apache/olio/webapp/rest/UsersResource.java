@@ -114,21 +114,20 @@ public class UsersResource {
 
   @GET
   @Produces("application/json")
-    //public JSONObject getUser(@PathParam("userid") String userid) throws JSONException, Exception {
-       public JSONArray getUsers() throws JSONException, Exception {
+  //public JSONObject getUser(@PathParam("userid") String userid) throws JSONException, Exception {
+  public JSONArray getUsers() throws JSONException, Exception {
       logger.finer(" get USERs is here !");
       mf = (ModelFacade)getServletContext().getAttribute(WebConstants.MF_KEY);
       List<Person> allUsers = mf.getAllPersons();
-       JSONArray uriArray = new JSONArray();
-        for (Person userEntity : allUsers) {
-            UriBuilder ub = uriInfo.getAbsolutePathBuilder();
-            URI userUri = ub.
+      JSONArray uriArray = new JSONArray();
+      for (Person userEntity : allUsers) {
+          UriBuilder ub = uriInfo.getAbsolutePathBuilder();
+          URI userUri = ub.
                     path(userEntity.getUserName()).
                     build();
-            uriArray.put(userUri.toASCIIString());
-        }
-        return uriArray;
-
+          uriArray.put(userUri.toASCIIString());
+      }
+      return uriArray;
   }
 
   

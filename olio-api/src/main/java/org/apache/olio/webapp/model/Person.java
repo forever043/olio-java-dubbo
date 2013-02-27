@@ -20,6 +20,7 @@ package org.apache.olio.webapp.model;
 
 import java.util.Collection;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 /*
 @NamedQueries(
@@ -57,7 +58,6 @@ public class Person implements java.io.Serializable {
     private Collection<Person> friends;
     private Collection<Invitation> incomingInvitations;
     private Collection<Invitation> outgoingInvitations;
-    private boolean hasReceivedInvitation;
     private int extFlag = 0;
     public static final int PERSON_EXT_ADDRESS = 1;
     public static final int PERSON_EXT_FRIENDS = 2;
@@ -222,5 +222,23 @@ public class Person implements java.io.Serializable {
         Person other = (Person)object;
         return this.userName.equals(other.getUserName());
     }
+ 
+    // UI only
+    private boolean hasReceivedInvitation = false;
+    private Collection<Person> nonFriendList = new ArrayList<Person>();
+    public boolean isHasReceivedInvitation() {
+        return hasReceivedInvitation;
+    }
+    public void setHasReceivedInvitation(boolean hasReceivedInvitation) {
+        this.hasReceivedInvitation = hasReceivedInvitation;
+    }
+    public Collection<Person> getNonFriendList() {
+        return nonFriendList;
+    }
+    public void setNonFriendList(Collection<Person> nonFriendList) {
+        this.nonFriendList = nonFriendList;
+    }
+    // --- end UI only
+
 }
 

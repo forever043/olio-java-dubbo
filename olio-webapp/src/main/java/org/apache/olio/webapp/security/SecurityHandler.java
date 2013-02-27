@@ -35,6 +35,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.olio.webapp.service.PersonService;
+
 /**
  * The SecurityHandler singleton handles all the 
  * generic security of the live application
@@ -56,8 +58,8 @@ public class SecurityHandler {
     
     
     public Person login(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, String userName, String password) {
-         ModelFacade mf=(ModelFacade)servletContext.getAttribute(WebConstants.MF_KEY);
-         Person person=mf.getPerson(userName);
+         PersonService personService = (PersonService)servletContext.getAttribute(WebConstants.DUBBO_PERSON_SERVICE_KEY);
+         Person person = personService.getPerson(userName);
          // person will be null if there is an error
          person=login(person, userName, password);
          if(person != null) {

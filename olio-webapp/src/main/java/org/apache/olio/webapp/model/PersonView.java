@@ -39,8 +39,6 @@ public class PersonView extends Person {
               telephone, imageURL, imageThumbURL, timezone, address);
     }
     public PersonView(Person person) {
-        if (person == null)
-            throw new IllegalArgumentException("Can't construct PersonView object with null");
         super(person.userName, person.password, person.firstName, person.lastName, person.summary, person.email,
               person.telephone, person.imageURL, person.imageThumbURL, person.timezone, person.getAddress());
     }
