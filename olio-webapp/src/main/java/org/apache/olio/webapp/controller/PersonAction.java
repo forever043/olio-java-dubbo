@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.apache.olio.webapp.service.PersonService;
+import org.apache.olio.webapp.service.EventService;
 
 /**
  * handles all request related to users
@@ -52,9 +53,13 @@ public class PersonAction implements Action {
 
     private Logger logger = Logger.getLogger(PersonAction.class.getName());
     private ServletContext context;
+    private PersonService personService;
+    private EventService  eventService;
 
     public PersonAction(ServletContext context) {
         this.context = context;
+        this.personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);	// ++ dubbo
+        this.eventService  = (EventService)context.getAttribute(DUBBO_EVENT_SERVICE_KEY);	// ++ dubbo
     }
 
     /**
@@ -74,7 +79,6 @@ public class PersonAction implements Action {
 
         String actionType = request.getParameter(ACTION_TYPE_PARAM);
         ModelFacade mf = (ModelFacade) context.getAttribute(MF_KEY);
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);	// ++ dubbo
 
         String returnURL = null;
         String path = request.getPathInfo();
@@ -115,7 +119,7 @@ public class PersonAction implements Action {
                 Person displayUser = personService.getPerson(username);
                 if (displayUser != null) {
                     //get posted events
-                    Collection<SocialEvent> userEvents = mf.getPostedEvents(displayUser);
+                    Collection<SocialEvent> userEvents = eventService.getPostedEvents(username);
                     request.setAttribute("userEvents", userEvents);
                     //logger.finer("the size of the incoming friendships is "+ displayUser.getIncomingInvitations().size());
                     request.setAttribute("displayPerson", displayUser);
@@ -153,7 +157,7 @@ public class PersonAction implements Action {
                 Person displayUser = personService.getPerson(username);
                 if (displayUser != null) {
                     //get posted events
-                    Collection<SocialEvent> myPostedEvents = mf.getPostedEvents(displayUser);
+                    Collection<SocialEvent> myPostedEvents = eventService.getPostedEvents(username);
                     logger.finer("the size of myPostedEvents is " + myPostedEvents.size());
                     request.setAttribute("myPostedEvents", myPostedEvents);
                 }
@@ -161,9 +165,8 @@ public class PersonAction implements Action {
             } else if (actionType.equalsIgnoreCase("Search")) {
                 String query = request.getParameter("query");
                 //need to specify max results
-                Collection<Person> searchResults = mf.searchUsers(query, 0);
+                Collection<Person> searchResults = personService.searchUsers(query, 0);
                 //have all of the users - now get the friends
-                Person requestor = mf.findPerson(userName);
                 UserBean userBean = (UserBean) request.getSession().getAttribute("userBean");
                 Person loggedInPerson = userBean.getLoggedInPerson();
                 String loggedInPersonUsername = loggedInPerson.getUserName();

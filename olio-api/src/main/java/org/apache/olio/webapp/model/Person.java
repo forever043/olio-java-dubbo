@@ -177,6 +177,11 @@ public class Person implements java.io.Serializable {
             throw new IllegalStateException("Person.incomingInvitations not fetched: userName \"" + this.userName + "\"");
         return incomingInvitations;
     }
+    public int getFriendshipRequests() {
+        if ((extFlag & PERSON_EXT_INVITATIONS_INCOMING) == 0)
+            throw new IllegalStateException("Person.incomingInvitations not fetched: userName \"" + this.userName + "\"");
+        return incomingInvitations.size();
+    }
     public Collection<Invitation> getOutgoingInvitations() {
         if ((extFlag & PERSON_EXT_INVITATIONS_OUTGOING) == 0)
             throw new IllegalStateException("Person.outgoingInvitations not fetched: userName \"" + this.userName + "\"");

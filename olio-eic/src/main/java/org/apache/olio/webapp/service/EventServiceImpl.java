@@ -35,7 +35,9 @@ import com.alibaba.dubbo.rpc.RpcContext;
 
 import org.apache.olio.webapp.util.WebappConstants;
 import org.apache.olio.webapp.model.SocialEvent;
+import org.apache.olio.webapp.model.SocialEventTag;
 import org.apache.olio.webapp.model.SocialEventRowMapper;
+import org.apache.olio.webapp.model.SocialEventTagRowMapper;
 
 @Transactional
 public class EventServiceImpl implements EventService {
@@ -47,9 +49,23 @@ public class EventServiceImpl implements EventService {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
+    public SocialEvent getSocialEvent(int eid) {
+        String sql = "select * from SOCIALEVENT where SOCIALEVENTID=?";
+        return (SocialEvent)jdbcTemplate.queryForObject(sql, new Object[]{eid}, new SocialEventRowMapper());
+    }
+
     public Collection<SocialEvent> getSocialEvents(String userName) {
+        if (userName == null)
+            return null;
         String sql = "select e.* from PERSON_SOCIALEVENT p inner join SOCIALEVENT e on p.SOCIALEVENTID=e.SOCIALEVENTID where p.UserName=?";
         return jdbcTemplate.query(sql, new Object[]{userName}, new SocialEventRowMapper());
+    }
+
+    public Collection<SocialEvent> getSocialEventsByTag(String tagName) {
+        if (tagName == null)
+            return null;
+        String sql = "select e.* from SOCIALEVENTTAG_SOCIALEVENT t inner join SOCIALEVENT e on t.SOCIALEVENTID=e.SOCIALEVENTID where t.SOCIALEVENTTAGID = (select SOCIALEVENTTAGID from SOCIALEVENTTAG where TAG=?)";
+        return jdbcTemplate.query(sql, new Object[]{tagName}, new SocialEventRowMapper());
     }
 
     public void attendSocialEvent(int eventID, String userName) {
@@ -65,7 +81,7 @@ public class EventServiceImpl implements EventService {
             new int[]{java.sql.Types.INTEGER, java.sql.Types.VARCHAR});
     }
 
-    public List<SocialEvent> getSocialEvents(Map<String, Object> qMap) {
+    public SocialEventsResult getSocialEvents(Map<String, Object> qMap) {
         int day = 0, month = 0, year = 0, startIndex = 0, eventsPerPage = WebappConstants.ITEMS_PER_PAGE;
         int orderBy = WebappConstants.ORDER_BY_ASCENDING;
         String zip = null, orderType = null;
@@ -83,21 +99,26 @@ public class EventServiceImpl implements EventService {
         if ((value = qMap.get("startIndex")) != null)
             startIndex = (Integer) value;
         if ((value = qMap.get("eventsPerPage")) != null)
-            eventsPerPage = (Integer) value;
+            eventsPerPage = ((Integer)value>0) ? (Integer) value : eventsPerPage;
         if ((value = qMap.get("orderBy")) != null)
             orderBy = (Integer) value;
 
         StringBuilder qstrb = new StringBuilder();
-        qstrb.append("SELECT i ");
+        qstrb.append("SELECT i.* ");
 
         // strb is used to hold the qhere clause so that it can reused for the Count query
         StringBuilder strb = new StringBuilder();
-        strb.append("FROM SocialEvent i WHERE ");
+        strb.append("FROM SOCIALEVENT i ");
         boolean zipSet = false;
         if (zip != null && zip.trim().length() != 0) {
-            strb.append("i.address.zip = '" + zip + "' AND ");
+            strb.append("INNER JOIN ADDRESS a on i.ADDRESS_ADDRESSID=a.ADDRESSID WHERE ");
+            strb.append("a.zip = '" + zip + "' AND ");
             zipSet = true;
         }
+        else {
+            strb.append("WHERE ");
+        }
+
         boolean dateSet = false;
         Timestamp lts = null;
         Timestamp uts = null;
@@ -123,27 +144,86 @@ public class EventServiceImpl implements EventService {
         } else {
             qstrb.append("DESC");
         }
-
-        List<SocialEvent> socialEvents = jdbcTemplate.query(qstrb.toString(), new SocialEventRowMapper());
+        
+        String sql = qstrb.toString() + " LIMIT ?,?";
+        List<SocialEvent> socialEvents = jdbcTemplate.query(sql,
+            new Object[]{startIndex, eventsPerPage},
+            new SocialEventRowMapper());
 
         Long size = 0l;
         if (socialEvents != null && socialEvents.size() == eventsPerPage) {
-            qstrb = new StringBuilder("SELECT COUNT(i) ");
+            qstrb = new StringBuilder("SELECT COUNT(SOCIALEVENTID) ");
             qstrb.append(strb);
             size = (Long) jdbcTemplate.queryForLong(qstrb.toString());
         } else if (socialEvents != null) {
             size = (long) socialEvents.size();
         }
 
-        qMap.put("listSize", size);
-        return socialEvents;
+        return new SocialEventsResult(socialEvents, size);
     }
 
+    public List<SocialEventTag> getSocialEventTags(int topN) {
+        String sql = "SELECT * FROM SOCIALEVENTTAG ORDER BY refCount DESC limit 0,?";
+        return jdbcTemplate.query(sql, new Object[]{topN}, new SocialEventTagRowMapper());
+    }
+
+    public SocialEventsResult getUpcomingEvents(String userName, Map<String, Object> qMap) {
+        int startIndex = 0, eventsPerPage = WebappConstants.ITEMS_PER_PAGE;
+        Integer value = (Integer) qMap.get("startIndex");
+        if (value != null) {
+            startIndex = value;
+        }
+        value = (Integer) qMap.get("eventsPerPage");
+        if (value != null) {
+            eventsPerPage = (value>0) ? value : eventsPerPage;
+        }
+
+        String sql = "SELECT e.* FROM SOCIALEVENT e "
+                   + "INNER JOIN PERSON_SOCIALEVENT p on e.SOCIALEVENTID=p.SOCIALEVENTID "
+                   + "WHERE p.userName= ? AND e.eventTimestamp >= CURRENT_TIMESTAMP "
+                   + "ORDER BY e.eventTimestamp ASC "
+                   + "LIMIT ?,?";
+        List<SocialEvent> events = jdbcTemplate.query(sql,
+            new Object[]{userName, startIndex, eventsPerPage},
+            new SocialEventRowMapper());
+
+        Long l = 0l;
+        // We need a count of the events for paging.
+        // However, this is not required if eventsPerPage is less than the ITEMS_PER_PAGE
+        if (eventsPerPage >= WebappConstants.ITEMS_PER_PAGE) {
+            if (events != null && events.size() == eventsPerPage) {
+                // Get the count for these events
+                //qstr = "SELECT COUNT(e) FROM SocialEvent e JOIN e.attendees p WHERE p.userName= :uname";
+                sql = "SELECT count(*) FROM SOCIALEVENT e "
+                    + "INNER JOIN PERSON_SOCIALEVENT p on e.SOCIALEVENTID=p.SOCIALEVENTID "
+                    + "WHERE p.userName= ? AND e.eventTimestamp >= CURRENT_TIMESTAMP";
+                l = (Long) jdbcTemplate.queryForLong(sql, new Object[]{userName});
+            } else if (events != null) {
+                l = (long) events.size();
+            }
+        } else if (events != null) {
+            l = (long) events.size();
+        }
+
+        return new SocialEventsResult(events, l);
+    }
+
+    public List<SocialEvent>  getPostedEvents(String userName) {
+        String sql = "SELECT * FROM SOCIALEVENT WHERE submitterUserName = ?";
+        return jdbcTemplate.query(sql, new Object[]{userName}, new SocialEventRowMapper());
+    }
 
     public String sayHello(String name) {
         System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" 
                            + "Hello " + name + ", "
                            + "request from consumer: " + RpcContext.getContext().getRemoteAddress());
+
+/*
+        Map<String, Object> qmap = new java.util.HashMap<String, Object>();
+        qmap.put("zip", "92330");
+        List<SocialEvent> lst = getSocialEvents(qmap);
+*/
+        
         return "Hello " + name + ", response form provider: " + RpcContext.getContext().getLocalAddress();
     }
 

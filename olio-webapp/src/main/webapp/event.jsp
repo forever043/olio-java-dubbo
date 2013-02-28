@@ -180,7 +180,7 @@
 
 <div id="event_tags">
   <h1 class="inline">Tags::</h1>
-  <div id="tag_list">${requestScope['socialEvent'].tagCloud}</div>
+  <div id="tag_list">${requestScope['tagCloud']}</div>
   <div class="clr"></div>
 </div>
 

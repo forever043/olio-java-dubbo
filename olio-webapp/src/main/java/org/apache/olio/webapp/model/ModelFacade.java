@@ -50,6 +50,9 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.transaction.UserTransaction;
 
+import org.apache.olio.webapp.service.PersonService;
+import org.apache.olio.webapp.service.EventService;
+
 //import for mysql constraint Exception
 //import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 /**
@@ -74,6 +77,16 @@ public class ModelFacade implements ServletContextListener {
     private boolean useCache = true;
     private String artifactPath = null;
     private Logger logger = Logger.getLogger(ModelFacade.class.getName());
+
+    private PersonService personService = null;
+    private EventService eventService = null;
+
+    public void setPersonService(PersonService personService) {
+        this.personService = personService;
+    }
+    public void setEventService(EventService eventService) {
+        this.eventService = eventService;
+    }
 
     /** Creates a new instance of ModelFacade */
     public ModelFacade() {
@@ -764,7 +777,10 @@ public class ModelFacade implements ServletContextListener {
         if (useCache && tagCloudStr != null) {
             return tagCloudStr;
         }
-        tagCloudStr = WebappUtil.createTagCloud(getContext().getContextPath(), getSocialEventTags());
+
+        // majiuyue - dubbo service replaced
+        List<SocialEventTag> tags = eventService.getSocialEventTags(WebappConstants.NUM_TAGS);
+        tagCloudStr = WebappUtil.createTagCloud(getContext().getContextPath(), tags);
         return tagCloudStr;
     }
 
@@ -886,7 +902,7 @@ public class ModelFacade implements ServletContextListener {
     public List<SocialEvent> getUpcomingEvents(Person p, int max) {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("eventsPerPage", max);
-        return getUpcomingEvents(p, map);
+        return eventService.getUpcomingEvents(p.userName, map).events;
     }
 
     public List<SocialEvent> getUpcomingEvents(Person p, Map<String, Object> qMap) {

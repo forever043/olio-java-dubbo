@@ -30,6 +30,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import static org.apache.olio.webapp.controller.WebConstants.*;
 
+import org.apache.olio.webapp.service.EventService;
+
 /**
  *
  * @author Binu John
@@ -37,21 +39,22 @@ import static org.apache.olio.webapp.controller.WebConstants.*;
 public class TagAction implements Action {
     
     private ServletContext context;
+    private EventService eventService;
     
     /** Creates a new instance of EventAction */
     public TagAction(ServletContext con) {
         this.context = con;
+        this.eventService = (EventService)context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
     }
 
     public String process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String path = request.getPathInfo();
-        ModelFacade mf= (ModelFacade) context.getAttribute(MF_KEY);
         if (path.equals("/display")) {
             String tag = request.getParameter("tag");
             if (tag == null)
                 return null;
             int index = WebappUtil.getIntProperty(request.getParameter("index"));
-            List<SocialEvent> list = mf.getSocialEventsByTag(tag);
+            List<SocialEvent> list = (List<SocialEvent>)eventService.getSocialEventsByTag(tag);
             if (list != null) {
                 List<SocialEvent> slist = WebappUtil.getPagedList(list, index);
                 request.setAttribute("numPages", WebappUtil.getNumPages(list));

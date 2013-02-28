@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.olio.webapp.service.PersonService;
 import org.apache.olio.webapp.service.EventService;
 import static org.apache.olio.webapp.controller.WebConstants.*;
+import org.apache.olio.webapp.model.ModelFacade;
 
 //import com.sun.javaee.blueprints.webapp.model.Item;
 //import com.sun.javaee.blueprints.webapp.model.Tag;
@@ -81,6 +82,11 @@ public class ControllerServlet extends HttpServlet {
         ServletContext context = getServletContext();
         context.setAttribute(DUBBO_PERSON_SERVICE_KEY, personService);
         context.setAttribute(DUBBO_EVENT_SERVICE_KEY,  eventService);
+
+        // majiuyue - temporary
+        ModelFacade mf = (ModelFacade)context.getAttribute(MF_KEY);
+        mf.setPersonService(personService);
+        mf.setEventService(eventService);
 
         actionMap.put("/api/person", new PersonRestAction(context));
         actionMap.put("/api/event", new EventRestAction(context));

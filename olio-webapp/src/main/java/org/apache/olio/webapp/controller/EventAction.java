@@ -37,7 +37,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.olio.webapp.cache.CacheFactory;
 
+import org.apache.olio.webapp.service.PersonService;
 import org.apache.olio.webapp.service.EventService;
+import org.apache.olio.webapp.service.EventService.SocialEventsResult;
 
 /**
  * Handles action for the event - update of comments and ratings.
@@ -47,19 +49,22 @@ import org.apache.olio.webapp.service.EventService;
 public class EventAction implements Action {
     
     private ServletContext context;
+    private PersonService personService;
+    private EventService eventService;
     
     /** Creates a new instance of EventAction */
     public EventAction(ServletContext con) {
         this.context = con;
+        this.personService = (PersonService) context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
+        this.eventService = (EventService) context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
     }
 
     public String process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ModelFacade mf= (ModelFacade) context.getAttribute(MF_KEY);
-        EventService es = (EventService) context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
 
         String path = request.getPathInfo();
         if (path.equals("/list")) {
-            return listEvents (request, response, mf, es);
+            return listEvents (request, response, mf);
         }
         if (path.equals("/addEvent") || path.equals("/updateEvent")) {
             return addEvent (request, response);
@@ -72,9 +77,14 @@ public class EventAction implements Action {
         int eid = this.getSocialEventID(eventID);
         
         if (path.equals("/detail")) {
-            SocialEvent se = mf.getSocialEvent(eid);
+            SocialEvent se = eventService.getSocialEvent(eid);
             if (se == null)
                 throw new RuntimeException("Could not find event. eventID = " + eid);
+
+            // majiuyue: tagCloud
+            String tagCloud = WebappUtil.createTagCloud(se.getTags());
+            request.setAttribute("tagCloud", tagCloud);
+            // ++ End
 
             request.setAttribute("socialEvent", se);
             boolean attending = false;
@@ -163,7 +173,7 @@ public class EventAction implements Action {
         }
     }
 
-    private String listEvents(HttpServletRequest request, HttpServletResponse response, ModelFacade mf, EventService es) throws IOException, ServletException {
+    private String listEvents(HttpServletRequest request, HttpServletResponse response, ModelFacade mf) throws IOException, ServletException {
         int index = WebappUtil.getIntProperty(request.getParameter("index"));
         String zip = request.getParameter("zipcode");
         String order = request.getParameter("order");
@@ -221,7 +231,7 @@ public class EventAction implements Action {
                     cl = new CachedList(cacheKey);
 
                     // get a new cacheable page/partial
-                    cobj = createCachePageObject(queryMap, response, request, es);
+                    cobj = createCachePageObject(queryMap, response, request);
                     cl.put(index, cobj); 
 
 
@@ -234,7 +244,7 @@ public class EventAction implements Action {
                     // something in the cache
                     cobj = cl.get(index); // we are using this whatever
 
-                    Object newCobj = createCachePageObject(queryMap, response, request, es);
+                    Object newCobj = createCachePageObject(queryMap, response, request);
                     cl.put(index, newCobj); // replaces existing value
                      if (cache.needsRefresh(true, cacheKey)) {
                         cache.put(cacheKey, cl, CacheFactory.getInstance().getCacheExpireInSeconds());
@@ -258,26 +268,21 @@ public class EventAction implements Action {
             }
         }
 
-        return prepNoCacheRequest(queryMap, response, request, es);
+        return prepNoCacheRequest(queryMap, response, request);
 
     }
 
     private Object createCachePageObject(Map<String, Object> queryMap,
                                          HttpServletResponse response,
-                                         HttpServletRequest request,
-                                         EventService es) throws java.io.IOException,
-                                                                javax.servlet.ServletException {
+                                         HttpServletRequest request)
+        throws java.io.IOException, javax.servlet.ServletException {
 
         // Fill the cache
-        List<SocialEvent> list = es.getSocialEvents(queryMap);
+        SocialEventsResult result = eventService.getSocialEvents(queryMap);
+        List<SocialEvent> list = result.events;
         int numPages = 1;
-        if (list != null) {
-            Object o = queryMap.get("listSize");
-            if (o != null) {
-                Long l = (Long) o;
-                numPages = WebappUtil.getNumPages(l);
-            }
-        }
+        if (list != null)
+            numPages = WebappUtil.getNumPages(result.count);
 
         request.setAttribute("itemList", list);
         request.setAttribute("numPages", numPages);
@@ -285,20 +290,16 @@ public class EventAction implements Action {
         return WebappUtil.acquirePageContent("/eventList.jsp", request, response);
     }
 
-    private String prepNoCacheRequest(Map<String, Object> queryMap, HttpServletResponse response, HttpServletRequest request, EventService es) {
+    private String prepNoCacheRequest(Map<String, Object> queryMap, HttpServletResponse response, HttpServletRequest request) {
 
         String pageType = request.getParameter("displayType");
         int index = WebappUtil.getIntProperty(request.getParameter("index"));
-        List<SocialEvent> list = es.getSocialEvents(queryMap);
-
+        SocialEventsResult result = eventService.getSocialEvents(queryMap);
+        List<SocialEvent> list = result.events;
         int numPages = 1;
-        if (list != null) {
-            Object o = queryMap.get("listSize");
-            if (o != null) {
-                Long l = (Long) o;
-                numPages = WebappUtil.getNumPages(l);
-            }
-        }
+        if (list != null)
+            numPages = WebappUtil.getNumPages(result.count);
+
         request.setAttribute("itemList", list);
         request.setAttribute("numPages", numPages);
         if (pageType != null && pageType.equalsIgnoreCase("partial"))
@@ -311,25 +312,27 @@ public class EventAction implements Action {
         String userName = request.getParameter("userName");
         Person user = null;
         if (userName != null) {
-            user = mf.findPerson(userName);
+            user = personService.findPerson(userName);
         }
         else {
             // Get the loggedin user
             user = SecurityHandler.getInstance().getLoggedInPerson(request);
+            userName = user.getUserName();
         }
         if (user == null) {
             request.setAttribute("errorMessage", "Could not find user for user = " + userName);
             return "/site.jsp?page=error.jsp";
         }
+
         Map<String, Object> qMap = new HashMap<String, Object>();
         int index = WebappUtil.getIntProperty(request.getParameter("index"));
         
         int eventsPerPage = WebappConstants.ITEMS_PER_PAGE;
         qMap.put("startIndex", index*eventsPerPage);
         qMap.put("eventsPerPage", eventsPerPage);
-        List<SocialEvent> list = mf.getUpcomingEvents(user, qMap);
-        Long l = (Long) qMap.get("listSize");
-        int numPages = WebappUtil.getNumPages(l);
+        SocialEventsResult result = eventService.getUpcomingEvents(userName, qMap);
+        List<SocialEvent> list = result.events;
+        int numPages = WebappUtil.getNumPages(result.count);
         request.setAttribute("itemList", list);
         request.setAttribute("numPages", numPages);
         request.setAttribute("index", index);

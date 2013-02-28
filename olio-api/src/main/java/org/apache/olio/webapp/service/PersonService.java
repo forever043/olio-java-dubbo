@@ -26,7 +26,7 @@ public interface PersonService {
     String addPerson(Person person);
     void updatePerson(Person person);
     void deletePerson(String person);
-    List<Person> searchPerson(String query, int maxResult);
+    List<Person> searchUsers(String query, int maxResult);
     
     Person findPerson(String userName);   // Fetch basic info only
     Person getPerson(String userName);    // Fetch all related informations

@@ -16,6 +16,7 @@ import org.apache.olio.webapp.model.Address;
 import org.apache.olio.webapp.model.Invitation;
 import org.apache.olio.webapp.model.PersonRowMapper;
 import org.apache.olio.webapp.model.AddressRowMapper;
+import org.apache.olio.webapp.model.InvitationRowMapper;
 
 @Transactional
 public class PersonServiceImpl implements PersonService {
@@ -28,7 +29,7 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public Person validLogin(String userName, String password) {
-	Person person = findPerson(userName);
+	Person person = getPerson(userName);
         if (person.getPassword().equals(password)) {
             logger.info("user \"" + userName + "\" login OK");
             return person;
@@ -40,8 +41,9 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public Person findPerson(String userName) {
+        String sql = "SELECT * FROM PERSON u WHERE u.userName = ?";
         Person person = (Person)jdbcTemplate.queryForObject(
-            "SELECT * FROM PERSON u WHERE u.userName = ?",
+            sql,
             new Object[]{userName},
             new PersonRowMapper());  
         return person;
@@ -151,10 +153,11 @@ public class PersonServiceImpl implements PersonService {
             new int[]{java.sql.Types.INTEGER});
     }
 
-    public List<Person> searchPerson(String query, int maxResult) {
+    public List<Person> searchUsers(String query, int maxResult) {
         String sql = "SELECT * FROM PERSON i WHERE i.userName LIKE " +
-                     "\'" + query + "%\'" + " ORDER BY i.userName DESC " +
-                     "limit 0," + maxResult;
+                     "\'" + query + "%\'" + " ORDER BY i.userName DESC";
+        if (maxResult > 0)
+            sql += " limit 0," + maxResult;
         return jdbcTemplate.query(sql, new PersonRowMapper());
     }
 
@@ -168,10 +171,12 @@ public class PersonServiceImpl implements PersonService {
     }
 
     public List<Invitation> getOutgoingInvitations(String userName) {
-        return null;
+        String sql = "SELECT * FROM INVITATION WHERE REQUESTOR_USERNAME=?";
+        return jdbcTemplate.query(sql, new Object[]{userName}, new InvitationRowMapper());
     }
     public List<Invitation> getIncomingInvitations(String userName) {
-        return null;
+        String sql = "SELECT * FROM INVITATION WHERE CANDIDATE_USERNAME=?";
+        return jdbcTemplate.query(sql, new Object[]{userName}, new InvitationRowMapper());
     }
 
     public String sayHello(String name) {
