@@ -28,6 +28,7 @@ import java.util.List;
 
 public class SocialEvent implements java.io.Serializable {
     
+    // basic info
     private int socialEventID;
     private String title;
     private String submitterUserName;
@@ -44,6 +45,7 @@ public class SocialEvent implements java.io.Serializable {
     private int disabled;
     private int addressID;
 
+    // ext info
     private Address address;
     private List<SocialEventTag> tags = new ArrayList<SocialEventTag>();
     private Collection<Person> attendees = new ArrayList<Person>();

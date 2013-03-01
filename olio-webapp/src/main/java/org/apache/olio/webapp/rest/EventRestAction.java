@@ -48,6 +48,7 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import org.apache.olio.webapp.service.EventService;
+import org.apache.olio.webapp.service.PersonService;
 
 /**
  * handles all request related to users
@@ -64,8 +65,13 @@ public class EventRestAction implements Action {
     private static final int UPDATE_MODE_DELETE_ATTENDEE = 2;
     private Logger logger = Logger.getLogger(EventRestAction.class.getName());
 
+    private EventService eventService;
+    private PersonService personService;
+
     public EventRestAction(ServletContext context) {
         this.context = context;
+        this.eventService = (EventService) context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
+        this.personService = (PersonService) context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
     }
 
     public String process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -157,7 +163,7 @@ public class EventRestAction implements Action {
         }
         try {
             int eventId = Integer.parseInt(sxEventId);
-            SocialEvent event = modelFacade.getSocialEvent(eventId);
+            SocialEvent event = eventService.getSocialEvent(eventId);
             if (event == null) {
                 throw new RuntimeException("Couldnot find event with socialEventID = " +
                         eventId);
@@ -177,20 +183,17 @@ public class EventRestAction implements Action {
             }
 
             if (!already) {
-                EventService es = (EventService) context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
                 if (mode == UPDATE_MODE_ADD_ATTENDEE) {
-                    //event.getAttendees().add(person);
-                    //person.getSocialEvents().add(event);
-                    es.attendSocialEvent(event.getSocialEventID(), person.getUserName());
+                    event.getAttendees().add(person);
+                    eventService.attendSocialEvent(event.getSocialEventID(), person.getUserName());
                     status = "added";
                 } else {
-                    //event.getAttendees().remove(person);
-                    //person.getSocialEvents().remove(event);
-                    es.quitSocialEvent(event.getSocialEventID(), person.getUserName());
+                    event.getAttendees().remove(person);
+                    eventService.quitSocialEvent(event.getSocialEventID(), person.getUserName());
                     status = "deleted";
                 }
 
-                modelFacade.updateSocialEvent(event);
+                //modelFacade.updateSocialEvent(event);
             }
             String s = getAttendeesAsJson(event.getAttendees(), status);
 
@@ -234,7 +237,7 @@ public class EventRestAction implements Action {
         SocialEvent event = null;
         try {
             int eventId = Integer.parseInt(sxEventId);
-            event = modelFacade.getSocialEvent(eventId);
+            event = eventService.getSocialEvent(eventId);
             if (event == null) {
                 throw new RuntimeException("Couldnot find event with socialEventID = " +
                         eventId);
@@ -321,7 +324,7 @@ public class EventRestAction implements Action {
             submitterUserName = htUpload.get("submitter_user_name");
             request.setAttribute("submitter_user_name", submitterUserName);
             logger.finer("EventRestAction:  other session--> username is " + submitterUserName);
-            person = modelFacade.getPerson(submitterUserName);
+            person = personService.getPerson(submitterUserName);
         //throw new RuntimeException(WebappUtil.getMessage("person_not_logged_in"));
         }
 
@@ -377,7 +380,7 @@ public class EventRestAction implements Action {
         }
         try {
             int id = Integer.parseInt(sids);
-            return modelFacade.getSocialEvent(id);
+            return eventService.getSocialEvent(id);
         } catch (Exception e) {
             throw new RuntimeException("updateSocialEvent: SocialEvent could not be retrieved - id = " +
                     sids);
@@ -592,7 +595,8 @@ public class EventRestAction implements Action {
             } else {
                 first = false;
             }
-            strb.append(cr.toJSON());
+            // majiuyue: TODO-fix JSON
+            //strb.append(cr.toJSON());
         }
         strb.append("]}");
         return strb.toString();

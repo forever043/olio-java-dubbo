@@ -34,10 +34,16 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.dubbo.rpc.RpcContext;
 
 import org.apache.olio.webapp.util.WebappConstants;
+import org.apache.olio.webapp.model.Person;
 import org.apache.olio.webapp.model.SocialEvent;
 import org.apache.olio.webapp.model.SocialEventTag;
+import org.apache.olio.webapp.model.CommentsRating;
+import org.apache.olio.webapp.model.Address;
+import org.apache.olio.webapp.model.PersonRowMapper;
 import org.apache.olio.webapp.model.SocialEventRowMapper;
 import org.apache.olio.webapp.model.SocialEventTagRowMapper;
+import org.apache.olio.webapp.model.CommentsRatingRowMapper;
+import org.apache.olio.webapp.model.AddressRowMapper;
 
 @Transactional
 public class EventServiceImpl implements EventService {
@@ -50,8 +56,38 @@ public class EventServiceImpl implements EventService {
     }
 
     public SocialEvent getSocialEvent(int eid) {
+        SocialEvent event = null;
         String sql = "select * from SOCIALEVENT where SOCIALEVENTID=?";
-        return (SocialEvent)jdbcTemplate.queryForObject(sql, new Object[]{eid}, new SocialEventRowMapper());
+        event = (SocialEvent)jdbcTemplate.queryForObject(sql, new Object[]{eid}, new SocialEventRowMapper());
+
+        // Fetch ext info
+        //   - address
+        Address address = (Address)jdbcTemplate.queryForObject(
+            "SELECT * FROM ADDRESS a WHERE a.AddressID = ?",
+            new Object[]{event.getAddressID()},
+            new AddressRowMapper());  
+        event.setAddress(address);
+        //   - tags
+        List<SocialEventTag> tags = (List<SocialEventTag>)jdbcTemplate.query(
+            "select t.* from SOCIALEVENTTAG t inner join SOCIALEVENTTAG_SOCIALEVENT i on t.SOCIALEVENTTAGID=i.SOCIALEVENTTAGID where i.SOCIALEVENTID=?",
+            new Object[]{event.getSocialEventID()},
+            new SocialEventTagRowMapper());  
+        event.setTags(tags);
+        //   - attendees
+        List<Person> attendees = (List<Person>)jdbcTemplate.query(
+            "select p.* from PERSON p inner join PERSON_SOCIALEVENT i on p.USERNAME=i.USERNAME where i.SOCIALEVENTID=?",
+            new Object[]{event.getSocialEventID()},
+            new PersonRowMapper());  
+        event.setAttendees(attendees);
+        //   - comments
+        List<CommentsRating> comments = (List<CommentsRating>)jdbcTemplate.query(
+            "select * from COMMENTS_RATING where SOCIALEVENT_SOCIALEVENTID=?",
+            new Object[]{event.getSocialEventID()},
+            new CommentsRatingRowMapper());  
+        event.setComments(comments);
+
+
+        return event;
     }
 
     public Collection<SocialEvent> getSocialEvents(String userName) {
@@ -75,7 +111,7 @@ public class EventServiceImpl implements EventService {
             new int[]{java.sql.Types.INTEGER, java.sql.Types.VARCHAR});
     }
     public void quitSocialEvent(int eventID, String userName) {
-        String sql = "delete PERSON_SOCIALEVENT where SOCIALEVENTID=? and USERNAME=?";
+        String sql = "delete from PERSON_SOCIALEVENT where SOCIALEVENTID=? and USERNAME=?";
         jdbcTemplate.update(sql,
             new Object[]{eventID, userName},
             new int[]{java.sql.Types.INTEGER, java.sql.Types.VARCHAR});
@@ -217,13 +253,6 @@ public class EventServiceImpl implements EventService {
         System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" 
                            + "Hello " + name + ", "
                            + "request from consumer: " + RpcContext.getContext().getRemoteAddress());
-
-/*
-        Map<String, Object> qmap = new java.util.HashMap<String, Object>();
-        qmap.put("zip", "92330");
-        List<SocialEvent> lst = getSocialEvents(qmap);
-*/
-        
         return "Hello " + name + ", response form provider: " + RpcContext.getContext().getLocalAddress();
     }
 

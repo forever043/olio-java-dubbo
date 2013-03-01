@@ -31,6 +31,8 @@ public class PersonView extends Person {
     //used for UI display purposes
     private boolean hasReceivedInvitation = false;
     private Collection<Person> nonFriendList = new ArrayList<Person>();        
+    private Collection<SocialEvent> postedEvents = null;
+    private Collection<SocialEvent> attendEvents = null;
     
     public PersonView() { }
     public PersonView(String userName, String password, String firstName, String lastName, String summary, String email,
@@ -39,8 +41,7 @@ public class PersonView extends Person {
               telephone, imageURL, imageThumbURL, timezone, address);
     }
     public PersonView(Person person) {
-        super(person.userName, person.password, person.firstName, person.lastName, person.summary, person.email,
-              person.telephone, person.imageURL, person.imageThumbURL, person.timezone, person.getAddress());
+        super(person);
     }
     
 /*
@@ -50,8 +51,11 @@ public class PersonView extends Person {
 */
     
     // TODO: Fix me
-    public Collection<SocialEvent> getSocialEvents() {
-        return null;
+    public void setPostedEvents(Collection<SocialEvent> postedEvents) {
+        this.postedEvents = postedEvents;
+    }
+    public void setAttendEvents(Collection<SocialEvent> attendEvents) {
+        this.attendEvents = attendEvents;
     }
 
     public boolean isHasReceivedInvitation() {
@@ -187,8 +191,8 @@ public class PersonView extends Person {
         boolean addedItems=false;
         sb.append(COMMA);
         sb.append( "\"postedEvents\":[");
-        if (getSocialEvents().size() > 0) {
-            for (SocialEvent event : getSocialEvents()) {
+        if (postedEvents.size() > 0) {
+            for (SocialEvent event : postedEvents) {
                 if(event.getSubmitterUserName().equals(userName)) {
                     addedItems=true;
                     sb.append("{\"socialEventId\":");
@@ -222,8 +226,8 @@ public class PersonView extends Person {
         //get list of all events the person is attending, just titles and dates, not all event info
         sb.append(COMMA);
         sb.append( "\"attendEvents\":[");
-        if (getSocialEvents().size() > 0) {
-            for (SocialEvent event : getSocialEvents()) {
+        if (attendEvents.size() > 0) {
+            for (SocialEvent event : attendEvents) {
                 sb.append("{\"socialEventId\":");
                 sb.append(DOUBLE_QUOTE);
                 sb.append(WebappUtil.encodeJSONString(String.valueOf(event.getSocialEventID())));
@@ -295,7 +299,7 @@ public class PersonView extends Person {
     
     // Copied from toJson. TODO - fix it
     public String getAttendEventsAsJson() {
-        return ModelFacade.eventsToJson(getSocialEvents());
+        return ModelFacade.eventsToJson(this.attendEvents);
     }
 
     public String getOutgoingInvitationsAsJson() {

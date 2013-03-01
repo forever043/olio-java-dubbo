@@ -80,7 +80,28 @@ public class Person implements java.io.Serializable {
         this.imageThumbURL = imageThumbURL;
         this.timezone = timezone;
         this.address = address;
-        this.extFlag = PERSON_EXT_ADDRESS;
+        this.extFlag = (address != null) ? PERSON_EXT_ADDRESS : 0;
+    }
+    public Person(Person p) {
+        // basic info
+        this.userName = p.userName;
+        this.password = p.password;
+        this.firstName = p.firstName;
+        this.lastName = p.lastName;
+        this.summary = p.summary;
+        this.email = p.email;
+        this.telephone = p.telephone;
+        this.imageURL = p.imageURL;
+        this.imageThumbURL = p.imageThumbURL;
+        this.timezone = p.timezone;
+        this.addressID = p.addressID;
+
+        // ext info
+        this.extFlag = p.extFlag;
+        this.address = p.address;
+        this.friends = p.friends;
+        this.incomingInvitations = p.incomingInvitations;
+        this.outgoingInvitations = p.outgoingInvitations;
     }
     
     // basic info
@@ -169,7 +190,7 @@ public class Person implements java.io.Serializable {
     }
     public Collection<Person> getFriends() {
         if ((extFlag & PERSON_EXT_FRIENDS) == 0)
-            throw new IllegalStateException("Person.friends not fetched: userName \"" + this.userName + "\"");
+            throw new IllegalStateException("Person.friends not fetched: userName \"" + this.userName + "\" extFlag=" + extFlag);
         return friends;
     }
     public Collection<Invitation> getIncomingInvitations() {

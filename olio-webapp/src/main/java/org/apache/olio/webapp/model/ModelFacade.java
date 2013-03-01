@@ -502,7 +502,7 @@ public class ModelFacade implements ServletContextListener {
         // Find the comment first
         CommentsRating comment = null;
         for (CommentsRating cr : event.getComments()) {
-            if (cr.getCommentsRatingId() == commentId) {
+            if (cr.getCommentsRatingID() == commentId) {
                 comment = cr;
                 break;
             }
@@ -512,7 +512,7 @@ public class ModelFacade implements ServletContextListener {
             return;
         }
         event.getComments().remove(comment);
-        comment.setSocialEvent(null);
+        comment.setSocialEventID(-1);
 
         EntityManager em = emf.createEntityManager();
         try {
@@ -790,7 +790,7 @@ public class ModelFacade implements ServletContextListener {
         CommentsRating crating = getCommentRating(user, event);
 
         if (crating == null) {
-            crating = new CommentsRating(event, user, null, rating);
+            crating = new CommentsRating(event.getSocialEventID(), user, null, rating);
             event.addComments(crating);
             event = updateSocialEvent(event);
         } else {
@@ -822,7 +822,7 @@ public class ModelFacade implements ServletContextListener {
         CommentsRating crating = getCommentRating(user, event);
 
         if (crating == null) {
-            crating = new CommentsRating(event, user, comments, rating);
+            crating = new CommentsRating(event.getSocialEventID(), user, comments, rating);
             event.addComments(crating);
             event = updateSocialEvent(event);
         } else {

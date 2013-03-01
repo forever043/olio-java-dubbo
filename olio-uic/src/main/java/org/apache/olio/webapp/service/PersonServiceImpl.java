@@ -56,6 +56,8 @@ public class PersonServiceImpl implements PersonService {
     public Person getPerson(String userName, int fetchFlag) {
         Person person;
 
+        logger.info("getPerson(\"" + userName + "\", " + fetchFlag + ")");
+
         // Fetch basic info
         person = findPerson(userName);
         if (person == null)
@@ -69,8 +71,10 @@ public class PersonServiceImpl implements PersonService {
                 new AddressRowMapper());  
             person.setAddress(address);
         }
-        if ((fetchFlag & Person.PERSON_EXT_FRIENDS) != 0)
+        if ((fetchFlag & Person.PERSON_EXT_FRIENDS) != 0) {
             person.setFriends(getFriends(person.getUserID()));
+            logger.info("friends count: " + person.getFriends().size());
+        }
         if ((fetchFlag & Person.PERSON_EXT_INVITATIONS_INCOMING) != 0)
             person.setIncomingInvitations(this.getIncomingInvitations(userName));
         if ((fetchFlag & Person.PERSON_EXT_INVITATIONS_OUTGOING) != 0)
@@ -170,12 +174,46 @@ public class PersonServiceImpl implements PersonService {
         return null;
     }
 
+    public Invitation findInvitation(String requestorUserName, String candidateUserName) {
+        Invitation inv = (Invitation)jdbcTemplate.queryForObject(
+            "SELECT i.*, r.FIRSTNAME REQUESTOR_FIRSTNAME, r.LASTNAME REQUESTOR_LASTNAME, c.FIRSTNAME CANDIDATE_FIRSTNAME, c.LASTNAME CANDIDATE_LASTNAME " +
+            "FROM INVITATION i " +
+            "INNER JOIN PERSON r ON i.REQUESTOR_USERNAME=r.USERNAME " +
+            "INNER JOIN PERSON c ON i.CANDIDATE_USERNAME=c.USERNAME " +
+            "WHERE REQUESTOR_USERNAME=? AND CANDIDATE_USERNAME=?",
+            new Object[] { requestorUserName, candidateUserName },
+            new InvitationRowMapper());
+        return inv;
+    }
+    public Invitation addInvitation(String requestorUserName, String candidateUserName) {
+        Person requestor = findPerson(requestorUserName);
+        Person candidate = findPerson(candidateUserName);
+        if ((requestor != null) && (candidate != null)) {
+            jdbcTemplate.update(
+                "insert into INVITATION (ISACCEPTED, REQUESTOR_USERNAME, CANDIDATE_USERNAME) values (0, ?, ?)",
+                new Object[]{requestorUserName, candidateUserName},
+                new int[]{java.sql.Types.VARCHAR, java.sql.Types.VARCHAR});
+        }
+        return findInvitation(requestorUserName, candidateUserName);
+    }
+
+    public Invitation deleteInvitation(String requestorUserName, String candidateUserName) {
+        Invitation inv = findInvitation(requestorUserName, candidateUserName);
+        if (inv != null) {
+            jdbcTemplate.update(
+                "delete from INVITATION where REQUESTOR_USERNAME=? and CANDIDATE_USERNAME=?",
+                new Object[] { requestorUserName, candidateUserName },
+                new int[] { java.sql.Types.VARCHAR, java.sql.Types.VARCHAR });
+        }
+        return inv;
+    }
+
     public List<Invitation> getOutgoingInvitations(String userName) {
-        String sql = "SELECT * FROM INVITATION WHERE REQUESTOR_USERNAME=?";
+        String sql = "SELECT i.*, r.FIRSTNAME REQUESTOR_FIRSTNAME, r.LASTNAME REQUESTOR_LASTNAME, c.FIRSTNAME CANDIDATE_FIRSTNAME, c.LASTNAME CANDIDATE_LASTNAME FROM INVITATION i INNER JOIN PERSON r ON i.REQUESTOR_USERNAME=r.USERNAME INNER JOIN PERSON c ON i.CANDIDATE_USERNAME=c.USERNAME WHERE REQUESTOR_USERNAME=?";
         return jdbcTemplate.query(sql, new Object[]{userName}, new InvitationRowMapper());
     }
     public List<Invitation> getIncomingInvitations(String userName) {
-        String sql = "SELECT * FROM INVITATION WHERE CANDIDATE_USERNAME=?";
+        String sql = "SELECT i.*, r.FIRSTNAME REQUESTOR_FIRSTNAME, r.LASTNAME REQUESTOR_LASTNAME, c.FIRSTNAME CANDIDATE_FIRSTNAME, c.LASTNAME CANDIDATE_LASTNAME FROM INVITATION i INNER JOIN PERSON r ON i.REQUESTOR_USERNAME=r.USERNAME INNER JOIN PERSON c ON i.CANDIDATE_USERNAME=c.USERNAME WHERE CANDIDATE_USERNAME=?";
         return jdbcTemplate.query(sql, new Object[]{userName}, new InvitationRowMapper());
     }
 

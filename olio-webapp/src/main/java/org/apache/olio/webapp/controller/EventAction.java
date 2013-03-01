@@ -113,7 +113,7 @@ public class EventAction implements Action {
         SocialEvent event = mf.updateSocialEventComment(person, eid, comments, 0);
             
         return "/site.jsp?page=event.jsp&socialEventID=" + eventID;
-        }
+    }
 
     private String deleteEvent (int eid, HttpServletRequest request, HttpServletResponse response) throws IOException {
         ModelFacade mf= (ModelFacade) context.getAttribute(MF_KEY);

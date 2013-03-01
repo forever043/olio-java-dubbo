@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.apache.olio.webapp.service.PersonService;
+import org.apache.olio.webapp.service.EventService;
 
 /**
  * handles all request related to users
@@ -53,10 +54,14 @@ import org.apache.olio.webapp.service.PersonService;
 public class PersonRestAction implements Action {
 
     private ServletContext context;
+    private PersonService personService;
+    private EventService  eventService;
     private Logger logger = Logger.getLogger(PersonRestAction.class.getName());
 
     public PersonRestAction(ServletContext context) {
         this.context = context;
+        this.personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
+        this.eventService  = (EventService)context.getAttribute(DUBBO_EVENT_SERVICE_KEY);
     }
 
     /**
@@ -82,22 +87,11 @@ public class PersonRestAction implements Action {
 
                 // file is upload check for error and then write to database
                 if (htUpload != null) {
-                    /*
-                    StringBuilder sb = new StringBuilder();
-                    for (String key : htUpload.keySet()) {
-                        sb.append(key);
-                        sb.append(",");
-                    }
-                    */
-                    //logger.finer("\n***elements  = " + sb.toString());
-
-                    //createUser(request, htUpload);
-                    // just for now comment out the above line
-                    // need to check if fileupload is complete
                     Person newEditPerson = null;
                     boolean isEditable = Boolean.parseBoolean(request.getParameter("isEditable"));
 
                     if (isEditable) {
+                        // majiuyue: TODO - request.user_name not exist
                         newEditPerson = getPerson(request);
                     } else {
                         newEditPerson = createUser(request, htUpload, fuh);
@@ -223,6 +217,8 @@ public class PersonRestAction implements Action {
 
         if (p != null) {
             PersonView pv = new PersonView(p); 
+            pv.setPostedEvents(eventService.getPostedEvents(p.getUserName()));
+            pv.setAttendEvents(eventService.getSocialEvents(p.getUserName()));
             out.write(pv.toJson());
         }
         out.close();
@@ -234,7 +230,6 @@ public class PersonRestAction implements Action {
      **/
     private Person getPerson(HttpServletRequest request) {
         String userName = request.getParameter(USER_NAME_PARAM);
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = personService.getPerson(userName);
         return person;
     }
@@ -288,10 +283,7 @@ public class PersonRestAction implements Action {
         PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, thumbImage, timezone, null);
         userName = personService.addPerson(person);
-
         logger.log(Level.FINER, "Person " + userName + " has been persisted");
-        // retrieve again ???
-        //person=mf.getPerson(userName);
         // login person
         SecurityHandler.getInstance().setLoggedInPerson(request, person);
         return person;
@@ -333,7 +325,7 @@ public class PersonRestAction implements Action {
             }
         }
 
-        logger.finer("************** data entered is*** " + "user_name*" + userName +
+        logger.info("************** data entered is*** " + "user_name*" + userName +
                 " password=" + password +
                 " first_name=" + firstName +
                 " last_name=" + lastName +
@@ -416,7 +408,6 @@ public class PersonRestAction implements Action {
     private void deleteUser(HttpServletRequest request) {
         //String personId = request.getParameter(PERSON_ID_PARAM);
         String userName = request.getParameter(USER_NAME_PARAM);
-        PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         personService.deletePerson(userName);
         logger.log(Level.FINER, "Person " + userName + " has been deleted");
     }

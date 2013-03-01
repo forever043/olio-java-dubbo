@@ -105,7 +105,6 @@ public class Address  implements java.io.Serializable {
         this.longitude = longitude;
     }
     
-/*
     @Override
     public String toString() {
         StringBuilder sb=new StringBuilder();
@@ -117,7 +116,6 @@ public class Address  implements java.io.Serializable {
         if(country != null) sb.append(COMMA + country);
         return sb.toString();
     }
-*/
 }
 
 

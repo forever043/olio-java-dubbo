@@ -65,11 +65,12 @@
             <param-name>com.sun.jersey.config.feature.Redirect</param-name>
             <param-value>true</param-value>
         </init-param>
+        <!-- majiuyue: remove JPA 
         <init-param>
             <param-name>unit:BPWebappPu</param-name>
             <param-value>persistence/olio</param-value>
         </init-param>
-         
+        --> 
         <load-on-startup>1</load-on-startup>
     </servlet>
     
@@ -159,6 +160,7 @@
         <exception-type>java.lang.RuntimeException</exception-type>
         <location>/site.jsp?page=error.jsp</location>
     </error-page>
+    <!-- majiuyue: remove JPA
      <persistence-unit-ref>
         <persistence-unit-ref-name>persistence/olio</persistence-unit-ref-name>
         <persistence-unit-name>BPWebappPu</persistence-unit-name>
@@ -169,6 +171,7 @@
         <res-auth>Container</res-auth>
         <res-sharing-scope>Shareable</res-sharing-scope>
     </resource-ref>
+    -->
   
     <env-entry>
         <description>Name of class used as the cache factory</description>
@@ -189,6 +192,7 @@
             <trim-directive-whitespaces>true</trim-directive-whitespaces>
         </jsp-property-group>
     </jsp-config>
+    <!-- majiuyue: remove JPA
     <persistence-context-ref>
         <description>
                 Persistence context for the olio webapp
@@ -197,13 +201,12 @@
                 persistence/olio/entity-manager
         </persistence-context-ref-name>
         <persistence-unit-name>
-                BPWebappPu <!-- Defined in persistence.xml -->
+                BPWebappPu 
         </persistence-unit-name>
     </persistence-context-ref>
     <persistence-unit-ref>
         <persistence-unit-ref-name>persistence/olio/factory</persistence-unit-ref-name>
         <persistence-unit-name>BPWebappPu</persistence-unit-name>
     </persistence-unit-ref>
- 
-            
+    -->
 </web-app>

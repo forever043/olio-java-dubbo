@@ -34,6 +34,9 @@ public interface PersonService {
 
     Person addFriend(int userID, int friendUserID);
 
+    Invitation addInvitation(String requestorUserName, String candidateUserName);
+    Invitation deleteInvitation(String requestorUserName, String candidateUserName);
+
 /*
     List<Person> getFriends(int userID);
     List<Invitation> getOutgoingInvitations(String userName);

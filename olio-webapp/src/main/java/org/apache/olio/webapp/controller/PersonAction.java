@@ -220,9 +220,10 @@ public class PersonAction implements Action {
                 String flag = request.getParameter("flag");
                 logger.finer("*** flag is " + flag);
                 if (flag.equals("add")) {
-                    Person friend = mf.findPerson(friendUsername);
-                    Invitation invitation = new Invitation(loggedInPerson, friend);
-                    mf.addInvitation(loggedInPerson, invitation);
+                    Invitation invitation =
+                        personService.addInvitation(loggedInPerson.getUserName(), friendUsername);
+                    loggedInPerson.getOutgoingInvitations().add(invitation);
+
                     //iterate through and set new added friend's hasReceivedInvitation to true
                     Iterator<Person> searchIter = previousSearchResults.iterator();
                     while (searchIter.hasNext()) {
@@ -234,8 +235,10 @@ public class PersonAction implements Action {
                     }
 
                 } else if (flag.equals("delete")) {
-                    Invitation inv = mf.findInvitation(loggedInPerson.getUserName(), friendUsername);
-                    mf.deleteInvitation(loggedInPerson, inv);
+                    Invitation invitation = personService.deleteInvitation(
+                        loggedInPerson.getUserName(), friendUsername);
+                    loggedInPerson.getIncomingInvitations().remove(invitation);
+
                     //iterate through and set new added friend's hasReceivedInvitation to false 
 
                     Iterator<Person> searchIter = previousSearchResults.iterator();
@@ -251,9 +254,6 @@ public class PersonAction implements Action {
 
                 //reset the old list in memory with new list
                 loggedInPerson.setNonFriendList(previousSearchResults);
-
-                //no need to do query again - just use previousSearch results
-                // Collection searchResults = mf.searchUsers(query, 0);
 
                 if (previousSearchResults != null) {
                     request.setAttribute("searchResults", previousSearchResults);
@@ -297,15 +297,8 @@ public class PersonAction implements Action {
 
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, thumbImage, timezone, address);
         PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
-        //do not really need username since you set this value, not sure why it is returned
-        //String userName = mf.addPerson(person, userSignOn);
-        //changed above line to this since username already a variable name
-        //userName = mf.addPerson(person, userSignOn);
-
         userName = personService.addPerson(person);
         logger.finer("Person " + userName + " has been persisted");
-        // retrieve again ???
-        //person=mf.getPerson(userName);
         // login person
         SecurityHandler.getInstance().setLoggedInPerson(request, person);
         return person;
