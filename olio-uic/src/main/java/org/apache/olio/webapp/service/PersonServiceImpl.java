@@ -3,12 +3,20 @@ package org.apache.olio.webapp.service;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.sql.DataSource;
-import org.springframework.jdbc.core.JdbcTemplate;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.SQLException;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.alibaba.dubbo.rpc.RpcContext;
 import org.apache.olio.webapp.model.Person;
@@ -48,6 +56,14 @@ public class PersonServiceImpl implements PersonService {
             new PersonRowMapper());  
         return person;
     }
+    public Person findPerson(int userID) {
+        String sql = "SELECT * FROM PERSON u WHERE u.UserID = ?";
+        Person person = (Person)jdbcTemplate.queryForObject(
+            sql,
+            new Object[]{userID},
+            new PersonRowMapper());  
+        return person;
+    }
 
     public Person getPerson(String userName) {
         return getPerson(userName, Person.PERSON_EXT_ALL);
@@ -83,42 +99,35 @@ public class PersonServiceImpl implements PersonService {
         return person;
     }
 
-
-    public String addPerson(Person person) {
-        String sql = "insert into PERSON (userName, password, firstName, lastName, summary, telephone, email, imageURL, imageThumbURL, timezone) " +
-                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    @Transactional(rollbackFor=Exception.class)
+    public Person addPerson(Person person) {
+        // Add address first
+        KeyHolder addressKey = new GeneratedKeyHolder();
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            public PreparedStatement createPreparedStatement(Connection connection)
+                throws SQLException {
+                return connection.prepareStatement(
+                    "insert into ADDRESS (ZIP) values ('')",
+                    Statement.RETURN_GENERATED_KEYS); 
+            }}, addressKey);
+        person.setAddressID(addressKey.getKey().intValue());
+        
+        // add person
         jdbcTemplate.update(
-            sql,
+            "insert into PERSON (userName, ADDRESS_ADDRESSID) values (?, ?)",
             new Object[] {
                 person.getUserName(),
-                person.getPassword(),
-                person.getFirstName(),
-                person.getLastName(),
-                person.getSummary(),
-                person.getTelephone(),
-                person.getEmail(),
-                person.getImageURL(),
-                person.getImageThumbURL(),
-                person.getTimezone()},
+                person.getAddressID()},
             new int[] {
                 java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR,
-                java.sql.Types.VARCHAR});
-        return person.getUserName();
+                java.sql.Types.INTEGER});
+
+        return getPerson(person.getUserName());
     }
 
     public void updatePerson(Person person) {
-        String sql = "update PERSON set userName=?, password=?, firstName=?, lastName=?, summary=?, telephone=?, email=?, imageURL=?, imageThumbURL=?, timezone=? " +
-                     "where userID=?";
         jdbcTemplate.update(                                                      
-            sql,
+            "update PERSON set userName=?, password=?, firstName=?, lastName=?, summary=?, telephone=?, email=?, imageURL=?, imageThumbURL=?, timezone=? where userID=?",
             new Object[] {                                                        
                 person.getUserName(),
                 person.getPassword(),
@@ -144,6 +153,29 @@ public class PersonServiceImpl implements PersonService {
                 java.sql.Types.VARCHAR,
                 java.sql.Types.INTEGER});
         // TODO: Update Address
+        Address cAddress = person.getAddress();
+        jdbcTemplate.update(
+            "update ADDRESS set STATE=?, COUNTRY=?, LATITUDE=?, LONGITUDE=?, CITY=?, ZIP=?, STREET1=?, STREET2=? where ADDRESSID=?",
+            new Object[] {
+                cAddress.getState(),
+                cAddress.getCountry(),
+                cAddress.getLatitude(),
+                cAddress.getLongitude(),
+                cAddress.getCity(),
+                cAddress.getZip(),
+                cAddress.getStreet1(),
+                cAddress.getStreet2(),
+                person.getAddressID() },
+            new int[] {
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.DOUBLE,
+                java.sql.Types.DOUBLE,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.VARCHAR,
+                java.sql.Types.INTEGER});
     }
 
     @Transactional(rollbackFor=Exception.class)
@@ -171,7 +203,17 @@ public class PersonServiceImpl implements PersonService {
     }
         
     public Person addFriend(int userID, int friendUserID) {
-        return null;
+        String sql = "insert into PERSON_PERSON (Person_USERID, friends_USERID) values (?,?)";
+        jdbcTemplate.update(sql, new Object[] { userID, friendUserID }, new int[] { java.sql.Types.INTEGER, java.sql.Types.INTEGER });
+        return findPerson(friendUserID);
+    }
+
+    public Person addFriend(String userName, String friendUserName) {
+        Person user = findPerson(userName);
+        Person friend = findPerson(friendUserName);
+        if ((user == null) || (friend == null))
+            return null;
+        return addFriend(user.getUserID(), friend.getUserID());
     }
 
     public Invitation findInvitation(String requestorUserName, String candidateUserName) {

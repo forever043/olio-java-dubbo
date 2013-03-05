@@ -192,8 +192,6 @@ public class EventRestAction implements Action {
                     eventService.quitSocialEvent(event.getSocialEventID(), person.getUserName());
                     status = "deleted";
                 }
-
-                //modelFacade.updateSocialEvent(event);
             }
             String s = getAttendeesAsJson(event.getAttendees(), status);
 
@@ -284,16 +282,6 @@ public class EventRestAction implements Action {
     }
 
     public SocialEvent createEvent(HttpServletRequest request, ModelFacade modelFacade, Hashtable<String, String> htUpload) {
-        /* We don't worry about the address at creation time. Only do at update.
-        String street1 = htUpload.get(STREET1_PARAM);
-        String street2 = htUpload.get(STREET2_PARAM);
-        String city = htUpload.get(CITY_PARAM);
-        String state = htUpload.get(STATE_PARAM);
-        String country = htUpload.get(COUNTRY_PARAM);
-        String zip = htUpload.get(ZIP_PARAM);
-        Address address = WebappUtil.handleAddress(context, street1, street2, city, state, zip, country);
-        */
-
         String title = htUpload.get(TITLE_PARAM);
         String description = htUpload.get(DESCRIPTION_PARAM);
         String summary = htUpload.get(SUMMARY_PARAM);
@@ -366,8 +354,8 @@ public class EventRestAction implements Action {
 
 
         // Submitter is not necessarily an attendde
-
-        socialEvent = modelFacade.addSocialEvent(socialEvent, tags);
+logger.info("Tags: " + tags);
+        socialEvent = eventService.addSocialEvent(socialEvent, tags);
         logger.log(Level.FINER, "SocialEvent " + socialEvent.getSocialEventID() + " has been persisted");
 
         return socialEvent;
@@ -472,7 +460,7 @@ public class EventRestAction implements Action {
         event.setImageThumbURL(thumbImage);
         event.setLiteratureURL(literaturex);
         
-        event = modelFacade.updateSocialEvent(event, tags);
+        event = eventService.updateSocialEvent(event, tags);
         logger.log(Level.FINER, "SocialEvent " + event.getSocialEventID() + " has been updated");
 
         return event;

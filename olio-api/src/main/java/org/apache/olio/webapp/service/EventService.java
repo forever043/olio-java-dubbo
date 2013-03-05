@@ -9,12 +9,18 @@ import org.apache.olio.webapp.model.SocialEventTag;
 public interface EventService {
 
     public SocialEvent getSocialEvent(int eid);
-
     public Collection<SocialEvent> getSocialEventsByTag(String tag);
     public Collection<SocialEvent> getSocialEvents(String userName);
 
+    public SocialEvent addSocialEvent(SocialEvent event, String tags);
+    public SocialEvent updateSocialEvent(SocialEvent event, String tags);
+    public void deleteSocialEvent(int eid);
+
     public void attendSocialEvent(int eventID, String userName);
     public void quitSocialEvent(int eventID, String userName);
+
+    public SocialEvent updateSocialEventRating(String userName, int eid, int rating);
+    public SocialEvent updateSocialEventComment(String userName, int eid, String comments);
 
     public class SocialEventsResult implements java.io.Serializable {
         public List<SocialEvent> events;

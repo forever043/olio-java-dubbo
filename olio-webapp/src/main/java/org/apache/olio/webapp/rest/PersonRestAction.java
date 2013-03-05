@@ -173,9 +173,13 @@ public class PersonRestAction implements Action {
 
 
             } else if (actionType.equals(APPROVE_FRIEND)) {
-                Invitation acceptedInv = modelFacade.findInvitation(friendUsername, loggedInPerson.getUserName());
-                modelFacade.addFriend(loggedInPerson.getUserName(), friendUsername);
-                modelFacade.deleteInvitation(loggedInPerson, acceptedInv);
+                Invitation acceptedInv = personService.findInvitation(friendUsername, loggedInPerson.getUserName());
+                if (acceptedInv == null)
+                    return null;
+                Person friend = personService.addFriend(friendUsername, loggedInPerson.getUserName());
+                personService.deleteInvitation(friendUsername, loggedInPerson.getUserName());
+                loggedInPerson.getFriends().add(friend);
+                loggedInPerson.getIncomingInvitations().remove(acceptedInv);
 
             } else if (actionType.equals(REJECT_INVITE)) {
                 //this is an incoming friendship request so the friend is the requestor
@@ -282,7 +286,7 @@ public class PersonRestAction implements Action {
 
         PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, thumbImage, timezone, null);
-        userName = personService.addPerson(person);
+        person = personService.addPerson(person);
         logger.log(Level.FINER, "Person " + userName + " has been persisted");
         // login person
         SecurityHandler.getInstance().setLoggedInPerson(request, person);
@@ -377,7 +381,7 @@ public class PersonRestAction implements Action {
 
         PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, imageThumbURL, timezone, address);
-        userName = personService.addPerson(person);
+        person = personService.addPerson(person);
         logger.log(Level.FINER, "Person " + userName + " has been persisted");
 
         return personService.getPerson(userName);

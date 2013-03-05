@@ -116,8 +116,7 @@ public class EventAction implements Action {
     }
 
     private String deleteEvent (int eid, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        ModelFacade mf= (ModelFacade) context.getAttribute(MF_KEY);
-        mf.deleteEvent(eid);
+        eventService.deleteSocialEvent(eid);
         // Since this affects the cache, clear the cache
         WebappUtil.clearCache("/event/list");
         response.sendRedirect(request.getContextPath() + "/event/list");
@@ -135,8 +134,7 @@ public class EventAction implements Action {
             return "/site.jsp?page=addEvent.jsp";
         
         int eid = getSocialEventID (eventID);
-        ModelFacade mf= (ModelFacade) context.getAttribute(MF_KEY);
-        SocialEvent event = mf.getSocialEvent(eid);
+        SocialEvent event = eventService.getSocialEvent(eid);
         if (event == null)
             return "/site.jsp?page=addEvent.jsp";
         

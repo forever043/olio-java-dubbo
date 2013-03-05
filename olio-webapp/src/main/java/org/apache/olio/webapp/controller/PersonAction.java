@@ -297,7 +297,7 @@ public class PersonAction implements Action {
 
         Person person = new Person(userName, password, firstName, lastName, summary, email, telephone, imageURL, thumbImage, timezone, address);
         PersonService personService = (PersonService)context.getAttribute(DUBBO_PERSON_SERVICE_KEY);
-        userName = personService.addPerson(person);
+        person = personService.addPerson(person);
         logger.finer("Person " + userName + " has been persisted");
         // login person
         SecurityHandler.getInstance().setLoggedInPerson(request, person);

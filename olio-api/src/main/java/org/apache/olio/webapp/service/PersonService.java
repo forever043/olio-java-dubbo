@@ -23,7 +23,7 @@ import org.apache.olio.webapp.model.Invitation;
 public interface PersonService {
 
     Person validLogin(String userName, String password);
-    String addPerson(Person person);
+    Person addPerson(Person person);
     void updatePerson(Person person);
     void deletePerson(String person);
     List<Person> searchUsers(String query, int maxResult);
@@ -33,9 +33,11 @@ public interface PersonService {
     Person getPerson(String userName, int fetchFlag);  // Fetch selected info
 
     Person addFriend(int userID, int friendUserID);
+    Person addFriend(String userName, String friendUserName);
 
     Invitation addInvitation(String requestorUserName, String candidateUserName);
     Invitation deleteInvitation(String requestorUserName, String candidateUserName);
+    Invitation findInvitation(String requestorUserName, String candidateUserName);
 
 /*
     List<Person> getFriends(int userID);

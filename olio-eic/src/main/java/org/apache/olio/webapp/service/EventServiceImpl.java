@@ -1,34 +1,29 @@
-/*
- * Copyright 1999-2011 Alibaba Group.
- *  
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *  
- *      http://www.apache.org/licenses/LICENSE-2.0
- *  
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.apache.olio.webapp.service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.GregorianCalendar;
+import java.util.StringTokenizer;
 
 import java.sql.Timestamp;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Calendar;
 
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.dubbo.rpc.RpcContext;
@@ -62,11 +57,17 @@ public class EventServiceImpl implements EventService {
 
         // Fetch ext info
         //   - address
-        Address address = (Address)jdbcTemplate.queryForObject(
-            "SELECT * FROM ADDRESS a WHERE a.AddressID = ?",
-            new Object[]{event.getAddressID()},
-            new AddressRowMapper());  
-        event.setAddress(address);
+        try {
+            Address address = (Address)jdbcTemplate.queryForObject(
+                "SELECT * FROM ADDRESS a WHERE a.AddressID = ?",
+                new Object[]{event.getAddressID()},
+                new AddressRowMapper());  
+            event.setAddress(address);
+        }
+        catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            event.setAddress(null);
+        }
+
         //   - tags
         List<SocialEventTag> tags = (List<SocialEventTag>)jdbcTemplate.query(
             "select t.* from SOCIALEVENTTAG t inner join SOCIALEVENTTAG_SOCIALEVENT i on t.SOCIALEVENTTAGID=i.SOCIALEVENTTAGID where i.SOCIALEVENTID=?",
@@ -86,9 +87,271 @@ public class EventServiceImpl implements EventService {
             new CommentsRatingRowMapper());  
         event.setComments(comments);
 
-
         return event;
     }
+
+    @Transactional(rollbackFor=Exception.class)
+    public void deleteSocialEvent(int eid) {
+        SocialEvent event = getSocialEvent(eid);
+        if (event == null)
+            return;
+
+        // remove relations and entity
+        jdbcTemplate.update(
+            "delete from SOCIALEVENTTAG_SOCIALEVENT where SOCIALEVENTID=?",
+            new Object[] { eid }, new int[] { java.sql.Types.INTEGER });
+        jdbcTemplate.update(
+            "delete from PERSON_SOCIALEVENT where SOCIALEVENTID=?",
+            new Object[] { eid }, new int[] { java.sql.Types.INTEGER });
+        jdbcTemplate.update(
+            "delete from SOCIALEVENT where SOCIALEVENTID=?",
+            new Object[] { eid }, new int[] { java.sql.Types.INTEGER });
+        // remove address
+        if (event.getAddress() != null) {
+            jdbcTemplate.update(
+                "delete from ADDRESS where ADDRESSID=?",
+                new Object[] { event.getAddress().getAddressID() }, new int[] { java.sql.Types.INTEGER });
+        }
+
+        // update tag refcount
+        List<SocialEventTag> tags = event.getTags();
+        if (tags != null) {
+            for (SocialEventTag tag : tags) {
+                if (tag.getRefCount() > 1) {
+                    jdbcTemplate.update(
+                        "update SOCIALEVENTTAG set REFCOUNT=REFCOUNT-1 where SOCIALEVENTTAGID=?",
+                        new Object[] { tag.getSocialEventTagID() }, new int[] { java.sql.Types.INTEGER });
+                }
+                else {
+                    jdbcTemplate.update(
+                        "delete from SOCIALEVENTTAG where SOCIALEVENTTAGID=?",
+                        new Object[] { tag.getSocialEventTagID() }, new int[] { java.sql.Types.INTEGER });
+                }
+            }
+        }
+    }
+
+    @Transactional(rollbackFor=Exception.class)
+    public SocialEvent addSocialEvent(SocialEvent event, String tags) {
+
+        logger.info("addSocialEvent(\"" + event.getTitle() + "\", \"" + tags + "\"");
+
+        // add entity, new generated eventID store in event.socialEventID
+        addSocialEventEntity(event);
+        // add social event to related tags
+        tagSocialEvent(event, tags);
+
+        // return new added event's title
+        return event;
+    }
+
+    @Transactional(rollbackFor=Exception.class)
+    public SocialEvent updateSocialEvent(SocialEvent event, String tags) {
+        // update event.address field
+        updateSocialEventAddress(event);
+        // add social event to related tags
+        tagSocialEvent(event, tags);
+        // update social event entity
+        updateSocialEventEntity(event);
+        // return new added event's title
+        return event;
+    }
+
+    @Transactional(rollbackFor=Exception.class)
+    public void updateSocialEventAddress(SocialEvent event) {
+        final Address cAddress = event.getAddress();
+        if (event.getAddressID() == 0) {
+            KeyHolder addressKey = new GeneratedKeyHolder();
+            jdbcTemplate.update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection connection)
+                    throws SQLException {
+                    PreparedStatement ps = connection.prepareStatement(
+                        "insert into ADDRESS (STATE, COUNTRY, LATITUDE, LONGITUDE, CITY, ZIP, STREET1, STREET2) values (?, ?, ?, ?, ?, ?, ?, ?)",
+                        Statement.RETURN_GENERATED_KEYS); 
+                    ps.setString(1, cAddress.getState());
+                    ps.setString(2, cAddress.getCountry());
+                    ps.setDouble(3, cAddress.getLatitude());
+                    ps.setDouble(4, cAddress.getLongitude());
+                    ps.setString(5, cAddress.getCity());
+                    ps.setString(6, cAddress.getZip());
+                    ps.setString(7, cAddress.getStreet1());
+                    ps.setString(8, cAddress.getStreet2());
+                    return ps;
+                }}, addressKey);
+            event.setAddressID(addressKey.getKey().intValue());
+        }
+        else {
+            jdbcTemplate.update(
+                "update ADDRESS set STATE=?, COUNTRY=?, LATITUDE=?, LONGITUDE=?, CITY=?, ZIP=?, STREET1=?, STREET2=? where ADDRESSID=?",
+                new Object[] {
+                    cAddress.getState(),
+                    cAddress.getCountry(),
+                    cAddress.getLatitude(),
+                    cAddress.getLongitude(),
+                    cAddress.getCity(),
+                    cAddress.getZip(),
+                    cAddress.getStreet1(),
+                    cAddress.getStreet2(),
+                    event.getAddressID() },
+                new int[] {
+                    java.sql.Types.VARCHAR,
+                    java.sql.Types.VARCHAR,
+                    java.sql.Types.DOUBLE,
+                    java.sql.Types.DOUBLE,
+                    java.sql.Types.VARCHAR,
+                    java.sql.Types.VARCHAR,
+                    java.sql.Types.VARCHAR,
+                    java.sql.Types.VARCHAR,
+                    java.sql.Types.INTEGER});
+        }
+    }
+        
+    @Transactional(rollbackFor=Exception.class)
+    private void tagSocialEvent(SocialEvent event, String tags) {
+        // get tag list from string, use the set to avoid duplicates
+        HashSet hTagSet = new HashSet<String>();
+        if (tags != null) {
+            StringTokenizer stTags = new StringTokenizer(tags, " ");
+            while (stTags.hasMoreTokens()) {
+                String tagx = stTags.nextToken().trim().toLowerCase();
+                if (tagx.length() == 0 || hTagSet.contains(tagx)) {
+                    // The tag is a duplicate, ignore
+                    logger.finer("Duplicate tag or empty tag -- " + tagx);
+                    continue;
+                }
+                hTagSet.add(tagx);
+                logger.info("Pared tag: " + tagx);
+            }
+        }
+
+        // Create a single query that returns all the existing tags
+        Iterator<String> iter;
+        List<SocialEventTag> ltags = null;
+        int size = hTagSet.size();
+        if (size > 0) {
+            StringBuilder strb = new StringBuilder("SELECT * FROM SOCIALEVENTTAG t WHERE t.tag IN (");
+            iter = hTagSet.iterator();
+            int i = 0;
+            while (iter.hasNext()) {
+                String tag = iter.next();
+                strb.append("'" + tag + "'");
+                if (++i < size)
+                    strb.append(", ");
+            }
+            strb.append(")");
+            logger.info("Tag query SQL: " + strb.toString());
+            ltags = jdbcTemplate.query(strb.toString(), new SocialEventTagRowMapper());
+        }
+
+        // delete old tags
+        jdbcTemplate.update(
+            "delete from SOCIALEVENTTAG_SOCIALEVENT where SOCIALEVENTID=?",
+            new Object[] { event.getSocialEventID() },
+            new int[]    { java.sql.Types.INTEGER });
+
+        // process exist tags
+        if (ltags != null) {
+            for (SocialEventTag ptag : ltags) {
+                // increase tag refcount
+                String sql = "update SOCIALEVENTTAG set REFCOUNT=REFCOUNT+1 where SOCIALEVENTTAGID=?";
+                jdbcTemplate.update(sql, new Object[]{ptag.getSocialEventTagID()}, new int[]{java.sql.Types.INTEGER});
+                // assign event with this tag
+                sql = "insert into SOCIALEVENTTAG_SOCIALEVENT (SOCIALEVENTID, SOCIALEVENTTAGID) values (?,?)";
+                jdbcTemplate.update(sql,
+                    new Object[]{event.getSocialEventID(), ptag.getSocialEventTagID()},
+                    new int[]{java.sql.Types.INTEGER, java.sql.Types.INTEGER});
+                // remove this tag from todo-list
+                hTagSet.remove(ptag.getTag());
+            }
+        }
+
+        // process non-exist tags
+        iter = hTagSet.iterator();
+        while (iter.hasNext()) {
+            final String tag = iter.next();
+            // add this tag to database
+            KeyHolder tagKey = new GeneratedKeyHolder();
+            jdbcTemplate.update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection connection)
+                    throws SQLException {
+                    PreparedStatement ps = connection.prepareStatement(
+                        "insert into SOCIALEVENTTAG (TAG, REFCOUNT) values (?,1)",
+                        Statement.RETURN_GENERATED_KEYS); 
+                    ps.setString(1, tag);
+                    return ps;
+                }}, tagKey);
+            // assign event with this tag
+            jdbcTemplate.update(
+                "insert into SOCIALEVENTTAG_SOCIALEVENT (SOCIALEVENTID, SOCIALEVENTTAGID) values (?,?)",
+                new Object[]{event.getSocialEventID(), tagKey.getKey().longValue()},
+                new int[]{java.sql.Types.INTEGER, java.sql.Types.INTEGER});
+        }
+    }
+
+
+    @Transactional(rollbackFor=Exception.class)
+    private void addSocialEventEntity(SocialEvent event) {
+        final String sql = "insert into SOCIALEVENT " +
+                     "(DESCRIPTION, TITLE, SUBMITTERUSERNAME, SUMMARY, TELEPHONE, IMAGETHUMBURL, IMAGEURL, " +
+                     "LITERATUREURL, EVENTTIMESTAMP, TOTALSCORE, NUMBEROFVOTES, DISABLED, CREATEDTIMESTAMP) " + 
+                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        final SocialEvent cEvent = event;
+        KeyHolder keyHolder = new GeneratedKeyHolder();  
+
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            public PreparedStatement createPreparedStatement(Connection connection)
+                throws SQLException {
+                PreparedStatement ps = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS); 
+                ps.setString(1, cEvent.getDescription());
+                ps.setString(2, cEvent.getTitle());
+                ps.setString(3, cEvent.getSubmitterUserName());
+                ps.setString(4, cEvent.getSummary());
+                ps.setString(5, cEvent.getTelephone());
+                ps.setString(6, cEvent.getImageThumbURL());
+                ps.setString(7, cEvent.getImageURL());
+                ps.setString(8, cEvent.getLiteratureURL());
+                ps.setTimestamp(9, cEvent.getEventTimestamp());
+                ps.setInt(10, cEvent.getTotalScore());
+                ps.setInt(11, cEvent.getNumberOfVotes());
+                ps.setInt(12, cEvent.getDisabled());
+                ps.setTimestamp(13, cEvent.getCreatedTimestamp());
+                return ps;
+            }
+        }, keyHolder);
+        event.setSocialEventID(keyHolder.getKey().intValue());
+    }
+
+    @Transactional(rollbackFor=Exception.class)
+    public void updateSocialEventEntity(SocialEvent event) {
+        final SocialEvent cEvent = event;
+        final String sql = "update SOCIALEVENT set " +
+                     "DESCRIPTION=?, TITLE=?, SUBMITTERUSERNAME=?, SUMMARY=?, TELEPHONE=?, IMAGETHUMBURL=?, IMAGEURL=?, " + 
+                     "LITERATUREURL=?, EVENTTIMESTAMP=?, TOTALSCORE=?, NUMBEROFVOTES=?, DISABLED=?, CREATEDTIMESTAMP=?, ADDRESS_ADDRESSID=? " +
+                     "where SOCIALEVENTID=?";
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            public PreparedStatement createPreparedStatement(Connection connection)
+                throws SQLException {
+                PreparedStatement ps = connection.prepareStatement(sql);
+                ps.setString(1, cEvent.getDescription());
+                ps.setString(2, cEvent.getTitle());
+                ps.setString(3, cEvent.getSubmitterUserName());
+                ps.setString(4, cEvent.getSummary());
+                ps.setString(5, cEvent.getTelephone());
+                ps.setString(6, cEvent.getImageThumbURL());
+                ps.setString(7, cEvent.getImageURL());
+                ps.setString(8, cEvent.getLiteratureURL());
+                ps.setTimestamp(9, cEvent.getEventTimestamp());
+                ps.setInt(10, cEvent.getTotalScore());
+                ps.setInt(11, cEvent.getNumberOfVotes());
+                ps.setInt(12, cEvent.getDisabled());
+                ps.setTimestamp(13, cEvent.getCreatedTimestamp());
+                ps.setInt(14, cEvent.getAddressID());
+                ps.setInt(15, cEvent.getSocialEventID());
+                return ps;
+            }
+        });
+    }
+
 
     public Collection<SocialEvent> getSocialEvents(String userName) {
         if (userName == null)
@@ -115,6 +378,16 @@ public class EventServiceImpl implements EventService {
         jdbcTemplate.update(sql,
             new Object[]{eventID, userName},
             new int[]{java.sql.Types.INTEGER, java.sql.Types.VARCHAR});
+    }
+
+    @Transactional(rollbackFor=Exception.class)
+    public SocialEvent updateSocialEventRating(String userName, int eid, int rating) {
+        return null; 
+    }
+
+    @Transactional(rollbackFor=Exception.class)
+    public SocialEvent updateSocialEventComment(String userName, int eid, String comments) {
+        return null; 
     }
 
     public SocialEventsResult getSocialEvents(Map<String, Object> qMap) {

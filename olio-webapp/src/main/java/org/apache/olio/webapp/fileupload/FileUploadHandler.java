@@ -392,7 +392,7 @@ public class FileUploadHandler {
                 htUpload.put(WebConstants.UPLOAD_EVENT_IMAGE_THUMBNAIL_PARAM, fileName);
             } else if (item.getFieldName().equals("upload_event_literature")) {
                 fileName = "E" + id + 'L' + ext;
-                fileLocation = serverLocationDir + "/" + fileName;
+                fileLocation = /*serverLocationDir + "/" +*/ fileName;
                 write(item, fileLocation);
                 htUpload.put(WebConstants.UPLOAD_LITERATURE_PARAM, fileName);
             } else {
