@@ -16,7 +16,7 @@
 
     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
         <property name="driverClassName" value="com.mysql.jdbc.Driver" />
-        <property name="url"      value="jdbc:mysql://gd72:3306/olio" />
+        <property name="url"      value="jdbc:mysql://172.16.1.72:3306/olio" />
         <property name="username" value="olio" />
         <property name="password" value="olio" />
         <property name="initialSize" value="1"></property>

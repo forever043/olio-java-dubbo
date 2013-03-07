@@ -363,7 +363,7 @@ public class EventServiceImpl implements EventService {
     public Collection<SocialEvent> getSocialEventsByTag(String tagName) {
         if (tagName == null)
             return null;
-        String sql = "select e.* from SOCIALEVENTTAG_SOCIALEVENT t inner join SOCIALEVENT e on t.SOCIALEVENTID=e.SOCIALEVENTID where t.SOCIALEVENTTAGID = (select SOCIALEVENTTAGID from SOCIALEVENTTAG where TAG=?)";
+        String sql = "select e.* from SOCIALEVENTTAG_SOCIALEVENT t inner join SOCIALEVENT e on t.SOCIALEVENTID=e.SOCIALEVENTID where t.SOCIALEVENTTAGID = (select SOCIALEVENTTAGID from SOCIALEVENTTAG where TAG=? limit 0,1)";
         return jdbcTemplate.query(sql, new Object[]{tagName}, new SocialEventRowMapper());
     }
 
