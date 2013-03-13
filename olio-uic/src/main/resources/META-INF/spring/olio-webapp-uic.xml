@@ -25,5 +25,4 @@
         </bean>
 	
 	<dubbo:service interface="org.apache.olio.webapp.service.PersonService" ref="personService" />
-	
 </beans>
